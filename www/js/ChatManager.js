@@ -32,12 +32,11 @@ ChatManager.prototype = {
 		$("#lineWidthInput").change(function(){_this.onLineWidthChanged($(this).val());});
 		$("#undo").click(function(){_this.onUndo();});
 
-		setTimeout(function(){_this.onResized();}, 1000);
+		setTimeout(function(){_this.onResized();}, 500);
 	},
 
 	onResized:function(){
 		if (!this.m_canvasMgr){
-			alert(1);
 			return;
 		}
 		this.m_canvasMgr.onResized();
