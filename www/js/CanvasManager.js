@@ -44,7 +44,7 @@ CanvasManager.prototype = {
 	},
 
 	onResized:function(){
-		this.m_height = this.m_wrap.height() - 10;
+		this.m_height = this.m_wrap.height();
 		this.m_width = this.m_height;
 		
 		dbg("canvas resized: height:" + this.m_height);
