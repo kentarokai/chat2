@@ -87,10 +87,17 @@ CanvasManager.prototype = {
 	},
 
 	undo:function(){
-		if (0 < this.m_bgObjects.length){
-			var popped = this.m_bgObjects.pop();
-			this.redrawBG();
-			this.m_elm.trigger("objectDeleted", [popped]);
+
+		for(var i= this.m_bgObjects.length-1; i>= 0; i--){
+			var item = this.m_bgObjects[i];
+			var id = item.id;
+			var _array = id.split("-");
+			if (_array[0] == this.m_instanceId){
+				this.m_bgObjects.splice(i,1);
+				this.redrawBG();
+				this.m_elm.trigger("objectDeleted", [_array]);
+				break;
+			}
 		}
 	},
 	

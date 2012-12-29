@@ -6,15 +6,27 @@ DrawingObject.prototype = {
 	points:[],
 	id:0,
 	smoothed:false,
-	serial:1,
 	
 	init:function(instanceId, serial, color, lineWidth){
 		this.color = color;
 		this.lineWidth = lineWidth;
 		this.points = [];
 		this.id = instanceId + "-" + serial;
+		this.smoothed = false;
 	},
 
+	initWithSONString:function(str){
+		if (!('JSON' in window)){
+			return;
+		}
+		var obj = JSON.parse(str);
+		this.id = obj.id;
+		this.color = obj.color;
+		this.lineWidth = obj.lineWidth;
+		this.points = obj.points;
+		this.smoothed = true;
+	},
+	
 	addPoint:function(xPc, yPc){
 		this.points.push({
 			x: xPc,
@@ -53,16 +65,6 @@ DrawingObject.prototype = {
 		return "";
 	},
 
-	loadFromJSONString:function(str){
-		if (!('JSON' in window)){
-			return;
-		}
-		var obj = JSON.parse(str);
-		this.id = obj.id;
-		this.color = obj.color;
-		this.lineWidth = obj.lineWidth;
-		this.points = obj.points;
-	},
 	
 	dummy:null
 }
