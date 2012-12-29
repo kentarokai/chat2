@@ -52,6 +52,17 @@ DrawingObject.prototype = {
 		}
 		return "";
 	},
+
+	loadFromJSONString:function(str){
+		if (!('JSON' in window)){
+			return;
+		}
+		var obj = JSON.parse(str);
+		this.id = obj.id;
+		this.color = obj.color;
+		this.lineWidth = obj.lineWidth;
+		this.points = obj.points;
+	},
 	
 	dummy:null
 }

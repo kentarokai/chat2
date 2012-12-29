@@ -154,6 +154,22 @@ CanvasManager.prototype = {
 		$("#dbg").text(json);
 	},
 
+	addObject:function(obj){
+		this.m_bgObjects.push(obj);
+		this.drawLine(obj, this.m_bgContext);
+	},
+
+	deleteObjecst:function(objectIds){
+		for(var i=0;i<objectIds.length;i++){
+			var objectId = objectIDs[i];
+			for (var j=this.m_bgObjects.length-1;j>=0;j--){
+				if(objectId = this.m_bgObjects[j].id){
+					this.m_bgObjects.splice(j,1);
+				}
+			}
+		}
+	},
+
 	onDrag:function(){
 		this.addCurrentPoint();
 		this.drawLine(this.m_currentObj, this.m_context);
@@ -181,7 +197,6 @@ CanvasManager.prototype = {
 		this.m_context.clearRect(0, 0, this.m_width, this.m_height);
 
 		var step = obj.smoothed ? 1 : this.m_step;
-
 		var points = obj.points;
 		
 		var pointCount = points.length;
