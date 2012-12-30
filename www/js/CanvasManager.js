@@ -2,6 +2,7 @@ function CanvasManager(){}
 CanvasManager.prototype = {
 
 	BASE_SIZE:640,
+	OUTPUT_SIZE:1024,
 	m_instanceId:"",
 	m_step:3,
 	m_wrap:null,
@@ -80,6 +81,10 @@ CanvasManager.prototype = {
 		this.m_lineWidth = w;
 	},
 
+	getRealLineWidth:function(){
+		return this.m_lineWidth * this.m_height / this.BASE_SIZE;
+	},
+
 	setSensitivity:function(n){
 		this.m_step = n;
 	},
@@ -90,6 +95,56 @@ CanvasManager.prototype = {
 			var obj = this.m_bgObjects[i];
 			this.drawLine(obj, this.m_bgContext);
 		}
+	},
+
+	makeImageData:function(bgImage){
+		var w = this.OUTPUT_SIZE;
+		var h = this.OUTPUT_SIZE;
+		var outCanvas = document.createElement('canvas');
+		outCanvas.width = w;
+		outCanvas.height = h;
+		var outContext = outCanvas.getContext('2d');
+		outContext.fillStyle = "white";
+        outContext.fillRect(0, 0, w,h);
+		
+		if (bgImage){
+			var sw = bgImage.width;
+			var sh = bgImage.height;
+			var dx,dy,dw,dh;
+			if (sw > sh){
+				dx = 0;
+				dw = w;
+				dh = dw * sh / sw;
+				dy = (h - dh) / 2.0;
+			}else{
+				dy = 0;
+				dh = h;
+				dw = dh * sw / sh;
+				dx = (w - dw) / 2.0;
+			}
+			outContext.drawImage(bgImage, dx, dy, dw, dh);
+		}
+
+		var widthSave = this.m_width;
+		var heightSave = this.m_height;
+		this.m_width = w;
+		this.m_height = h;
+		for(var i=0;i<this.m_bgObjects.length;i++){
+			var obj = this.m_bgObjects[i];
+			this.drawLine(obj, outContext);
+		}
+		this.m_width = widthSave;
+		this.m_height = heightSave;
+	
+		var data = outCanvas.toDataURL();
+		return data;
+		/*
+		var img = new Image();
+		img.src = data;
+		img.onload = function(){
+			location.href = img.src;
+		}
+		*/
 	},
 
 	undo:function(){

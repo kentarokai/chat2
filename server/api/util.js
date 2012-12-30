@@ -41,18 +41,56 @@ exports.buildJSONPResponse = function(req, obj)
 	}
 }
 
+var dateToFormattedString = exports.dateToFormattedString = function(date, format){
+	
+	var str00 = function(num){
+		var s = "";
+		if(num < 10){
+			s += "0";
+		}
+		return s + num;
+	};
+
+	var str000 = function(num){
+		if (100 > num){
+			return "0" + str00(num);
+		}
+		return "" + num;
+	};
+
+	var s = "";	
+	for(var i=0;i<format.length;i++){
+		var f = format[i];
+		switch(f){
+		default:
+			s += f;
+			break;
+		case 'Y':
+			s += str00(date.getFullYear());
+			break;
+		case 'm':
+			s += str00(date.getMonth()+1);
+			break;
+		case 'd':
+			s += str00(date.getDate());
+			break;
+		case 'H':
+			s += str00(date.getHours());
+			break;
+		case 'i':
+			s += str00(date.getMinutes());
+			break;
+		case 's':
+			s += str00(date.getSeconds());
+			break;
+		case 'u':
+			s += str000(date.getMilliseconds());
+			break;
+		}
+	}
+	return s;
+};
+
 exports.buildDateTimeStr = function(dateObj) {
-    year   = dateObj.getYear();
-    month  = dateObj.getMonth() + 1;
-    day    = dateObj.getDate();
-    hour   = dateObj.getHours();
-    minute = dateObj.getMinutes();
-    second = dateObj.getSeconds();
-    if (year < 2000) { year  += 1900; }
-    if (month  < 10) { month  = '0'+month; }
-    if (day    < 10) { day    = '0'+day; }
-    if (hour   < 10) { hour   = '0'+hour; }
-    if (minute < 10) { minute = '0'+minute; }
-    if (second < 10) { second = '0'+second; }
-    return String(year)+'/'+month+'/'+day+' '+hour+':'+minute+':'+second;
+	return dateToFormattedString(dateObj, "Y/m/d H:i:s");
 };
