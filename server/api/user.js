@@ -1,7 +1,7 @@
 var myutil = require('./util');
 var event = require('./event');
 
-var DEFINE_ACTIVE_SEC = 60;
+var DEFINE_ACTIVE_SEC = 30;
 var DEFINE_KEEP_EVENTS_SEC = 60;
 
 exports.list = function(req, res) {

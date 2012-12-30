@@ -5,6 +5,8 @@ ChatManager.prototype = {
 	FETCH_DEFAULT_INTERVAL:2000,
 	FETCH_MAX_INTERVAL:20000,
 	FETCH_FIRST:1500,
+	DEFAULT_LINE_COLOR:"#0000ff",
+	DEFAULT_LINE_WIDTH:2,
 	
 	m_canvasMgr:null,
 	m_resizeTimer:null,
@@ -17,6 +19,8 @@ ChatManager.prototype = {
 	m_cover:null,
 	m_hideCoverTimer:null,
 	m_fetchInterval:0,
+	m_lineColor:"",
+	m_bgImage:null,
 	
 	init:function(){
 		var _this = this;
@@ -41,6 +45,7 @@ ChatManager.prototype = {
 		this.m_canvasElm = $("#canvas");
 		this.m_canvasMgr = new CanvasManager();
 		this.m_canvasMgr.init(this.m_instanceId, $("#wrap"), this.m_canvasElm, $("#bgCanvas"));
+		this.m_canvasMgr.setLineWidth(this.DEFAULT_LINE_WIDTH);
 
 		this.m_cover.css("line-height", $("#wrap").height()+"px");
 		
@@ -51,17 +56,21 @@ ChatManager.prototype = {
 			_this.onDrawingObjectAdded(obj);
 		});
 
-		var _color = "#0000ff";
+		this.m_lineColor = this.DEFAULT_LINE_COLOR;
 		if (localStorage && 'color' in localStorage){
-			_color = localStorage.color;
+			this.m_lineColor = localStorage.color;
 		}
-		$("#color").farbtastic(function(color){_this.onColorChanged(color);}).setColor(_color);
+		$("#color").farbtastic(function(color){_this.onColorChanged(color);}).setColor(this.m_lineColor);
 		
 		$("#sensitivityInput").change(function(){_this.onSensitivityChanged($(this).val());});
-		$("#lineWidthInput").change(function(){_this.onLineWidthChanged($(this).val());});
+		$("#lineWidthInput").val(this.DEFAULT_LINE_WIDTH).change(function(){_this.onLineWidthChanged($(this).val());});
 		$("#undo").click(function(){_this.onUndo();});
 		$("#clearLines").click(function(){_this.onClearLines();});
 
+		$("#uploadBtn").click(function(){_this.onUploadClick();return false});
+		$("#cleagImgBtn").click(function(){_this.onClearImageClick();return false});
+		$("#downloadBtn").click(function(){_this.onDownloadClick();return false});
+		
 		setTimeout(function(){_this.onResized();}, 500);
 		setTimeout(function(){_this.fetch();}, this.FETCH_FIRST);
 	},
@@ -74,7 +83,22 @@ ChatManager.prototype = {
 		var height = this.m_canvasMgr.getHeight();
 		$("#bg").css({width:height, height:height}).removeClass("hidden");;
 		$("#bgImg").css({width:height, height:height});
-		
+		this.updateLinePreview();
+		this.m_cover.css("line-height", $("#wrap").height()+"px");
+	},
+
+	updateLinePreview:function(){
+		if (!this.m_canvasMgr){
+			return;
+		}
+		var $parent = $("#linePreview");
+		var $elm = $(".bar", $parent);
+
+		var parentHeight = $parent.outerHeight();
+		var width = this.m_canvasMgr.getRealLineWidth();
+		$elm.css("background-color",this.m_lineColor)
+			.css("height",width + "px").css("top", ((parentHeight - width) / 2.0) + "px");
+			
 	},
 
 	fetch:function(){
@@ -107,7 +131,9 @@ ChatManager.prototype = {
 		if (this.m_hideCoverTimer){
 			return;
 		}
-		this.m_cover.fadeOut();
+		this.m_cover.fadeOut(function(){
+			$(this).removeClass("title");
+		});
 	},
 
 	onFetchError:function(){
@@ -123,6 +149,14 @@ ChatManager.prototype = {
 		var _this = this;
 		this.hideCover();
 		this.m_inFetchRequest = false;
+
+		if (data.users){
+			var list = $("#users ul").empty();
+			for(var i=0;i<data.users.length;i++){
+				$("<li>").text(data.users[i].name).appendTo(list);
+			}
+		}
+		
 		if (!data.events || !data.events.length){
 			this.setNextFetch();
 			this.m_fetchInterval+=500;
@@ -132,13 +166,6 @@ ChatManager.prototype = {
 			return;
 		}
 		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
-
-		if (data.users){
-			var list = $("#users ul").empty();
-			for(var i=0;i<data.users.length;i++){
-				$("<li>").text(data.users[i].name).appendTo(list);
-			}
-		}
 		
 		var events = data.events;
 		var lastEvent = events[events.length-1];
@@ -148,31 +175,39 @@ ChatManager.prototype = {
 		var clearLineIndex = -1;
 		var deleteIds = [];
 		var addObjects = [];
+		var bgImagePath = null;
 		for(var i=events.length-1;i>=0;i--){
 			var event = events[i];
 			var action = event.action;
 
 			if ("lineclear" == action){
 				clearLineIndex = i;
-				break;
-			}
-			
-			var obj = new DrawingObject();
-			obj.initWithJSONString(event.value);
-
-			if ("linedelete" == action){
-				deleteIds.push(obj.id);
-			}else if ("lineadd" == action){
-				var id = obj.id;
-				var deleted = false;
-				for(var j=0;j<deleteIds.length;j++){
-					if (id == deleteIds[j]){
-						deleted = true;
-						break;
-					}
+			}else if ("imageadd" == action){
+				if (null === bgImagePath){
+					bgImagePath = event.value;
 				}
-				if (!deleted){
-					addObjects.push(obj);
+			}else if ("imagedelete" == action){
+				if (null === bgImagePath){
+					bgImagePath = "";
+				}
+			}else if (0 > clearLineIndex) {
+				var obj = new DrawingObject();
+				obj.initWithJSONString(event.value);
+	
+				if ("linedelete" == action){
+					deleteIds.push(obj.id);
+				}else if ("lineadd" == action){
+					var id = obj.id;
+					var deleted = false;
+					for(var j=0;j<deleteIds.length;j++){
+						if (id == deleteIds[j]){
+							deleted = true;
+							break;
+						}
+					}
+					if (!deleted){
+						addObjects.push(obj);
+					}
 				}
 			}
 		}
@@ -195,6 +230,13 @@ ChatManager.prototype = {
 			this.m_canvasMgr.addObject(addObjects[i]);
 		}
 		this.m_canvasMgr.deleteObjects(deleteIds);
+
+		if (bgImagePath){
+			this.setBGImage(bgImagePath);
+		}else if ("" === bgImagePath){
+			this.clearBGImage();
+		}
+		
 		this.m_lastFetchedEventId = lastEvent.id
 		this.setNextFetch();
 	},
@@ -250,7 +292,7 @@ ChatManager.prototype = {
 			var event = this.m_sendEvents[i];
 			var _obj = {
 				action: event.action,
-				value: (event.obj ? event.obj.toJSONString() : "")
+				value: (event.obj ? event.obj.toJSONString() : (event.value ? event.value : ""))
 			};
 			eventList.push(_obj);
 			var eventStr = JSON.stringify(_obj);
@@ -276,6 +318,7 @@ ChatManager.prototype = {
 	},
 
 	onColorChanged:function(color){
+		this.m_lineColor = color;
 		if (this.m_canvasMgr){
 			this.m_canvasMgr.setColor(color);
 		}
@@ -283,11 +326,19 @@ ChatManager.prototype = {
 		if (localStorage){
 			localStorage.color = color;
 		}
+		var _this = this;
+		setTimeout(function(){
+			_this.updateLinePreview();
+		},1);
 	},
 
 	onLineWidthChanged:function(val){
+		var _this = this;
 		if (this.m_canvasMgr){
 			this.m_canvasMgr.setLineWidth(parseInt(val, 10));
+			setTimeout(function(){
+				_this.updateLinePreview();
+			},1);
 		}
 	},
 
@@ -322,6 +373,80 @@ ChatManager.prototype = {
 			},5000);
 			dbg(data);
 		});
+	},
+
+	onDownloadClick:function(){
+		if (!this.m_canvasMgr){
+			return;
+		}
+		var data = this.m_canvasMgr.makeImageData(this.m_bgImage);
+		if (!data){
+			return;
+		}
+		$("#downloadFormData").val(data);
+		$("#downloadForm")[0].submit();
+		/*
+		$.ajax({
+			type: "POST",
+			url: "./api/image/convert",
+			data: {
+				data: data
+			},
+			success:function(data){
+				dbg(data);
+				if (data.path){
+					window.open(data.path);
+				}
+			}
+		});
+		*/
+	},
+
+	onClearImageClick:function(){
+		this.clearBGImage();
+		this.m_sendEvents.push({action:"imagedelete"});
+		this.sendEvents(null)
+	},
+
+	onUploadClick:function(){
+		var _this = this;
+		var file = $("#uploadFile").val();
+		if (!file){
+			return;
+		}
+        $('#uploadFields').upload('./api/image/upload', function(res) {
+			if (res && "ok" == res.stat && res.path){
+				_this.onImageUploaded(res);
+			}
+        }, 'json');
+        
+	},
+
+	onImageUploaded:function(data){
+		dbg(data.path);
+		this.setBGImage(data.path);
+		this.m_sendEvents.push({action:"imageadd", value: data.path});
+		this.sendEvents(null);
+	},
+
+	setBGImage:function(url){
+		var elm = $("#bgImg");
+		if (url){
+			elm.css("background-image", "url(" + url + ")");
+			var img = new Image();
+			img.src = url;
+			var _this = this;
+			img.onload = function(){
+				_this.m_bgImage = img;
+			}
+		}else{
+			elm.css("background-image", "");
+			this.m_bgImage = null;
+		}
+	},
+
+	clearBGImage:function(){
+		this.setBGImage("");
 	},
 	
 	dummy:null

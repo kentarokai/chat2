@@ -8,5 +8,9 @@
     "database": "CHAT2DB",
     "user": "mileproject",
     "password": "09099734742"
+  },
+  "image": {
+	"uploadDir": "/var/www/chat2/www/files",
+	"uploadURLDir": "/chat2/files"
   }
 }

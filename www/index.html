@@ -5,6 +5,7 @@
 <title>drawing chat v2</title>
 <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js'></script>
 <script type='text/javascript' src='./js/farbtastic.js'></script>
+<script type='text/javascript' src='./js/jquery.upload-1.0.2.js'></script>
 <script type='text/javascript' src='./js/DrawingObject.js'></script>
 <script type='text/javascript' src='./js/CanvasManager.js'></script>
 <script type='text/javascript' src='./js/ChatManager.js'></script>
@@ -13,6 +14,13 @@
 <link rel='stylesheet' type='text/css' href='./css/farbtastic.css' />
 </head>
 <body id="body">
+	<form style="display:none;" 
+		id="downloadForm" 
+		action="./api/image/convert"
+		target="_blank" 
+		method="POST">
+		<input type="hidden" name="data" id="downloadFormData" />
+	</form>
 	<div id="wrap">
 		<div id="bg" class="hidden"></div>
 		<div id="bgImg"></div>
@@ -21,13 +29,24 @@
 		<div id="control">
 			<button id="undo">Undo</button>
 			<button id="clearLines">Clear Lines</button>
+			<div id="uploadArea">
+				<form action="#" method="post">
+				    <div id="uploadFields">
+				      <input type="file" name="file" id="uploadFile"><br>
+				    </div>
+					<button id="uploadBtn">Upload</button>
+					<button id="cleagImgBtn">Clear Image</button>
+				  </form>
+			</div>
 			<div id="color"></div>
 			<div id="lineWidth">line-width: <input id="lineWidthInput" type="number" value="2" min="1" max="20"/></div>
+			<div id="linePreview"><div class="bar"></div></div>
+			<button id="downloadBtn">Download</button>
 			<div id="sensitivity">sensitivity: <input id="sensitivityInput" type="number" value="3" min="1" max="10"/></div>
 			<div id="users"><ul></ul></div>
 			<div id="dbgArea"><textarea id="dbg"></textarea></div>
 		</div>
-		<div id="cover">waiting...</div>
+		<div id="cover" class="title"></div>
 	</div>
 </body>
 </html>
