@@ -1,0 +1,12 @@
+{
+  "server": {
+    "port": 8124,
+    "base": "/chat2/api"
+  },
+  "mysql": {
+    "host": "localhost",
+    "database": "CHAT2DB",
+    "user": "mileproject",
+    "password": "09099734742"
+  }
+}

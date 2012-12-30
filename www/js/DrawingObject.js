@@ -15,7 +15,7 @@ DrawingObject.prototype = {
 		this.smoothed = false;
 	},
 
-	initWithSONString:function(str){
+	initWithJSONString:function(str){
 		if (!('JSON' in window)){
 			return;
 		}
@@ -52,6 +52,22 @@ DrawingObject.prototype = {
 		this.points = sPoints;
 	},
 
+	isLine:function(){
+		
+		if (2 > this.points.length){
+			return false;
+		}
+		var x=this.points[0].x;
+		var y=this.points[0].y;
+		for(var i=1;i<this.points.length;i++){
+			if (x != this.points[i].x
+				|| y != this.points[i].y){
+				return true;
+			}
+		}
+		return false;
+	},
+	
 	toJSONString:function(){
 		var obj = {
 			id : this.id,

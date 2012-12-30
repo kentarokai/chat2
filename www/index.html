@@ -14,17 +14,20 @@
 </head>
 <body id="body">
 	<div id="wrap">
-		<div id="bg"></div>
+		<div id="bg" class="hidden"></div>
 		<div id="bgImg"></div>
 		<canvas id="bgCanvas"></canvas>
 		<canvas id="canvas"></canvas>
 		<div id="control">
 			<button id="undo">Undo</button>
+			<button id="clearLines">Clear Lines</button>
 			<div id="color"></div>
 			<div id="lineWidth">line-width: <input id="lineWidthInput" type="number" value="2" min="1" max="20"/></div>
 			<div id="sensitivity">sensitivity: <input id="sensitivityInput" type="number" value="3" min="1" max="10"/></div>
+			<div id="users"><ul></ul></div>
 			<div id="dbgArea"><textarea id="dbg"></textarea></div>
 		</div>
+		<div id="cover">waiting...</div>
 	</div>
 </body>
 </html>
