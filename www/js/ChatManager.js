@@ -20,7 +20,10 @@ ChatManager.prototype = {
 	m_hideCoverTimer:null,
 	m_fetchInterval:0,
 	m_lineColor:"",
+	m_lineWidth:0,
 	m_bgImage:null,
+	m_myName:"",
+	m_userLineSettings:null,
 	
 	init:function(){
 		var _this = this;
@@ -37,7 +40,9 @@ ChatManager.prototype = {
 			$("body").addClass("touch");
 		}
 
+		
 		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
+		this.m_userLineSettings = {};
 		
 		this.m_cover = $("#cover");
 		this.m_instanceId = "" + Math.ceil(Math.random() * 10000);
@@ -61,9 +66,19 @@ ChatManager.prototype = {
 			this.m_lineColor = localStorage.color;
 		}
 		$("#color").farbtastic(function(color){_this.onColorChanged(color);}).setColor(this.m_lineColor);
+
+		this.m_lineWidth = this.DEFAULT_LINE_WIDTH;
+		$("#lineWidthSlider").slider({
+				min: 1,
+				max: 15,
+				step: 0.1,
+				value: this.m_lineWidth,
+				slide: function(event, ui){
+					_this.onLineWidthChanged(ui.value);
+				}
+			});
 		
 		$("#sensitivityInput").change(function(){_this.onSensitivityChanged($(this).val());});
-		$("#lineWidthInput").val(this.DEFAULT_LINE_WIDTH).change(function(){_this.onLineWidthChanged($(this).val());});
 		$("#undo").click(function(){_this.onUndo();});
 		$("#clearLines").click(function(){_this.onClearLines();});
 
@@ -84,6 +99,7 @@ ChatManager.prototype = {
 		$("#bg").css({width:height, height:height}).removeClass("hidden");;
 		$("#bgImg").css({width:height, height:height});
 		this.updateLinePreview();
+		this.setUserLine();
 		this.m_cover.css("line-height", $("#wrap").height()+"px");
 	},
 
@@ -102,7 +118,7 @@ ChatManager.prototype = {
 	},
 
 	fetch:function(){
-		dbg(this.m_fetchInterval);
+//		dbg(this.m_fetchInterval);
 			
 		var _this = this;
 		if (this.m_inFetchRequest || this.m_preventFetch){
@@ -127,9 +143,12 @@ ChatManager.prototype = {
 	},
 
 	hideCover:function(){
-		
 		if (this.m_hideCoverTimer){
 			return;
+		}
+		var $control = $("#control");
+		if (!$control.hasClass("slidein")){
+			$control.addClass("slidein");
 		}
 		this.m_cover.fadeOut(function(){
 			$(this).removeClass("title");
@@ -148,13 +167,19 @@ ChatManager.prototype = {
 		}
 		var _this = this;
 		this.hideCover();
+		
 		this.m_inFetchRequest = false;
 
+		if (data.user){
+			this.m_myName = data.user.name;
+		}
 		if (data.users){
 			var list = $("#users ul").empty();
 			for(var i=0;i<data.users.length;i++){
-				$("<li>").text(data.users[i].name).appendTo(list);
+				var name = data.users[i].name;
+				$("<li>").text(name).attr("data-name", name).appendTo(list);
 			}
+			this.setUserLine();
 		}
 		
 		if (!data.events || !data.events.length){
@@ -193,6 +218,7 @@ ChatManager.prototype = {
 			}else if (0 > clearLineIndex) {
 				var obj = new DrawingObject();
 				obj.initWithJSONString(event.value);
+				obj.owner = event.userName;
 	
 				if ("linedelete" == action){
 					deleteIds.push(obj.id);
@@ -226,11 +252,15 @@ ChatManager.prototype = {
 				},5000);
 			}
 		}
-		for (var i=0;i<addObjects.length;i++){
+		
+		for (var i=addObjects.length-1;i>=0;i--){
+			var obj = addObjects[i];
+			this.m_userLineSettings[obj.owner] = {color:obj.color};
 			this.m_canvasMgr.addObject(addObjects[i]);
 		}
 		this.m_canvasMgr.deleteObjects(deleteIds);
-
+		this.setUserLine();
+		
 		if (bgImagePath){
 			this.setBGImage(bgImagePath);
 		}else if ("" === bgImagePath){
@@ -246,6 +276,28 @@ ChatManager.prototype = {
 		setTimeout(function(){
 			_this.fetch();
 		},this.m_fetchInterval);
+	},
+
+	setUserLine:function(){
+		function componentToHex(c) {
+		    var hex = c.toString(16);
+		    return hex.length == 1 ? "0" + hex : hex;
+		}
+		function rgbToHex(r, g, b) {
+		    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+		}
+
+		this.m_userLineSettings[this.m_myName] = {color:this.m_lineColor};
+		
+		var rgbaRegExp = new RegExp("rgba\\(([0-9\\.]+),([0-9\\.]+),([0-9\\.]+),[0-9\\.]+\\)");
+		for(var name in this.m_userLineSettings){
+			var obj = this.m_userLineSettings[name];
+			var color = obj.color;
+			if (color.match(rgbaRegExp)){
+				color = rgbToHex(parseInt(RegExp.$1, 10),parseInt(RegExp.$2, 10),parseInt(RegExp.$3, 10));
+			}
+			$("#users ul li[data-name='" + name + "']").css("border-left-color", color);
+		}
 	},
 	
 	onDrawingObjectDeleted:function(obj){
@@ -329,6 +381,7 @@ ChatManager.prototype = {
 		var _this = this;
 		setTimeout(function(){
 			_this.updateLinePreview();
+			_this.setUserLine();
 		},1);
 	},
 
@@ -338,6 +391,7 @@ ChatManager.prototype = {
 			this.m_canvasMgr.setLineWidth(parseInt(val, 10));
 			setTimeout(function(){
 				_this.updateLinePreview();
+				_this.setUserLine();
 			},1);
 		}
 	},
@@ -424,8 +478,10 @@ ChatManager.prototype = {
 
 	onImageUploaded:function(data){
 		dbg(data.path);
-		this.setBGImage(data.path);
-		this.m_sendEvents.push({action:"imageadd", value: data.path});
+		var url = data.path;
+		url += "?_=" + Math.floor(Math.random() * 1000000);
+		this.setBGImage(url);
+		this.m_sendEvents.push({action:"imageadd", value: url});
 		this.sendEvents(null);
 	},
 

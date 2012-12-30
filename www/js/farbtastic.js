@@ -333,8 +333,14 @@ jQuery._farbtastic = function (container, callback) {
   }
 
   // Install mousedown handler (the others are set on the document on-demand)
-  $('*', e).mousedown(fb.mousedown);
+  //$('*', e).mousedown(fb.mousedown);
 
+  if(!!('ontouchstart' in window)){
+	$('*', e).mousedown(fb.mousedown);
+  }else{
+	$('*', e).mousedown(fb.mousedown);
+  }
+	
     // Init color
   fb.setColor('#000000');
 

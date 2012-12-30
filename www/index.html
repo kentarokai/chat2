@@ -4,12 +4,15 @@
 <meta charset="UTF-8">
 <title>drawing chat v2</title>
 <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js'></script>
+<script type='text/javascript' src='http://code.jquery.com/ui/1.9.2/jquery-ui.js'></script>
+<script type='text/javascript' src='./js/jquery.ui.touch-punch.min.js'></script>
 <script type='text/javascript' src='./js/farbtastic.js'></script>
 <script type='text/javascript' src='./js/jquery.upload-1.0.2.js'></script>
 <script type='text/javascript' src='./js/DrawingObject.js'></script>
 <script type='text/javascript' src='./js/CanvasManager.js'></script>
 <script type='text/javascript' src='./js/ChatManager.js'></script>
 <script type='text/javascript' src='./js/main.js'></script>
+<link rel='stylesheet' type='text/css' href='http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css' />
 <link rel='stylesheet' type='text/css' href='./css/style.css' />
 <link rel='stylesheet' type='text/css' href='./css/farbtastic.css' />
 </head>
@@ -27,8 +30,16 @@
 		<canvas id="bgCanvas"></canvas>
 		<canvas id="canvas"></canvas>
 		<div id="control">
-			<button id="undo">Undo</button>
-			<button id="clearLines">Clear Lines</button>
+			<div id="topArea">
+				<button id="undo">Undo</button>
+				<button id="clearLines">Clear Lines</button>
+			</div>
+			<div id="color"></div>
+			<div id="lineWidthSlider"></div>
+			<div id="linePreview"><div class="bar"></div></div>
+			<div id="sensitivity">sensitivity: <input id="sensitivityInput" type="number" value="3" min="1" max="10"/></div>
+			<div id="users"><ul></ul></div>
+			<br clear="all"/>
 			<div id="uploadArea">
 				<form action="#" method="post">
 				    <div id="uploadFields">
@@ -38,12 +49,7 @@
 					<button id="cleagImgBtn">Clear Image</button>
 				  </form>
 			</div>
-			<div id="color"></div>
-			<div id="lineWidth">line-width: <input id="lineWidthInput" type="number" value="2" min="1" max="20"/></div>
-			<div id="linePreview"><div class="bar"></div></div>
 			<button id="downloadBtn">Download</button>
-			<div id="sensitivity">sensitivity: <input id="sensitivityInput" type="number" value="3" min="1" max="10"/></div>
-			<div id="users"><ul></ul></div>
 			<div id="dbgArea"><textarea id="dbg"></textarea></div>
 		</div>
 		<div id="cover" class="title"></div>

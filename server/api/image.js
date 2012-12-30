@@ -1,6 +1,7 @@
 var myutil = require('./util');
 var user = require('./user');
 var fs = require("fs");
+var exec = require('child_process').exec;
 
 exports.upload = function(req,res){
 
@@ -13,26 +14,29 @@ exports.upload = function(req,res){
 			var name = req.files.file.name;
 	
 			console.log(name);
-	
-			var newFileName = myutil.dateToFormattedString(new Date(), "YmdHisu");
-			var names = name.split(".");
-			if (0 < names.length){
-				var ext = names.pop();
-				if (ext){
-					newFileName += "." + ext;
+
+			exec('rm -rf ' + req.config.image.uploadDir + '/20*', function(err, stdout, stderr){
+				
+				var newFileName = myutil.dateToFormattedString(new Date(), "YmdHisu");
+				var names = name.split(".");
+				if (0 < names.length){
+					var ext = names.pop();
+					if (ext){
+						newFileName += "." + ext;
+					}
 				}
-			}
-			
-			var newPath = req.config.image.uploadDir + "/" + newFileName;
-			console.log(newPath);
-			res.setHeader('Content-Type', "text/plain; charset=UTF-8");
-			fs.rename(path, newPath, function(err){
-				if (err){
-					res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'upload error'}));
-					return;
-				}
-				var urlPath = req.config.image.uploadURLDir + "/" + newFileName;
-				res.end(myutil.buildJSONPResponse(req, {'stat': 'ok', path: urlPath}));
+				
+				var newPath = req.config.image.uploadDir + "/" + newFileName;
+				console.log(newPath);
+				res.setHeader('Content-Type', "text/plain; charset=UTF-8");
+				fs.rename(path, newPath, function(err){
+					if (err){
+						res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'upload error'}));
+						return;
+					}
+					var urlPath = req.config.image.uploadURLDir + "/" + newFileName;
+					res.end(myutil.buildJSONPResponse(req, {'stat': 'ok', path: urlPath}));
+				});
 			});
 		}else{
 			res.setHeader('Content-Type', "text/plain; charset=UTF-8");
