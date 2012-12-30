@@ -33,12 +33,18 @@ CanvasManager.prototype = {
 		this.m_bg = $bg;
 		this.m_context = this.m_elm[0].getContext('2d');
 		this.m_bgContext = this.m_bg[0].getContext('2d');
-		
-		this.m_elm.bind("mousedown", function(e){_this.onMouseDown(e);});
-		this.m_elm.bind("mouseup", function(e){_this.onMouseUp(e);});
-		this.m_elm.bind("mouseover", function(e){_this.onMouseOver(e);});
-		this.m_elm.bind("mouseout", function(e){_this.onMouseOut(e);});
-		this.m_elm.bind("mousemove", function(e){_this.onMouseMove(e);});
+
+		if ($("body").hasClass("touch")){
+			this.m_elm.bind("touchstart", function(e){_this.onTouchStart(e);});
+			this.m_elm.bind("touchmove", function(e){_this.onTouchMove(e);});
+			this.m_elm.bind("touchend", function(e){_this.onTouchEnd(e);});
+		}else{		
+			this.m_elm.bind("mousedown", function(e){_this.onMouseDown(e);});
+			this.m_elm.bind("mouseup", function(e){_this.onMouseUp(e);});
+			this.m_elm.bind("mouseover", function(e){_this.onMouseOver(e);});
+			this.m_elm.bind("mouseout", function(e){_this.onMouseOut(e);});
+			this.m_elm.bind("mousemove", function(e){_this.onMouseMove(e);});
+		}
 
 		this.m_bgObjects = [];
 	},
@@ -87,18 +93,27 @@ CanvasManager.prototype = {
 	},
 
 	undo:function(){
-
 		for(var i= this.m_bgObjects.length-1; i>= 0; i--){
 			var item = this.m_bgObjects[i];
 			var id = item.id;
 			var _array = id.split("-");
 			if (_array[0] == this.m_instanceId){
+				var obj = this.m_bgObjects[i];
 				this.m_bgObjects.splice(i,1);
 				this.redrawBG();
-				this.m_elm.trigger("objectDeleted", [_array]);
+				dbg(obj);
+				this.m_elm.trigger("objectDeleted", obj);
 				break;
 			}
 		}
+	},
+
+	clear:function(){
+		this.m_bgObjects = [];
+		this.m_context.clearRect(0, 0, this.m_width, this.m_height);
+		this.m_bgContext.clearRect(0, 0, this.m_width, this.m_height);
+		this.m_isDragging = false;
+		this.m_currentObj = null;
 	},
 	
 	onMouseDown:function(e){
@@ -145,6 +160,56 @@ CanvasManager.prototype = {
 		this.onDrag();
 	},
 
+	onTouchStart:function(e){
+		event.preventDefault();
+		var touches = event.touches;
+		if (1 != touches.length){
+			return;
+		}
+
+		if (!this.m_isDragging){
+			this.m_isDragging = true;
+
+			var offset = this.m_elm.offset();
+			this.m_mouseX = touches[0].pageX + offset.left;
+			this.m_mouseY = touches[0].pageY + offset.top;
+			this.onStartDragging();
+		}
+		
+		$("#dbg").text(touches.length);
+	},
+
+	onTouchMove:function(e){
+		event.preventDefault();
+
+		var touches = event.touches;
+		if (1 != touches.length){
+			return;
+		}
+		var offset = this.m_elm.offset();
+		this.m_mouseX = touches[0].pageX + offset.left;
+		this.m_mouseY = touches[0].pageY + offset.top;
+		
+		var _this = this;
+		setTimeout(function(){
+			_this.onDrag();
+			$("#dbg").text(_this.m_mouseX);
+		},1);
+	},
+
+	onTouchEnd:function(e){
+		e.preventDefault();
+		var touches = event.touches;
+		if (0 != touches.length){
+			return;
+		}
+		if (this.m_isDragging){
+			this.m_isDragging = false;
+			this.onStopDragging();
+		}
+	},
+
+	
 	onStartDragging:function(){
 		this.m_currentObj = new DrawingObject();
 		this.m_currentObj.init(this.m_instanceId, (this.m_objSerial++), this.m_color, this.m_lineWidth);
@@ -155,25 +220,40 @@ CanvasManager.prototype = {
 		this.m_bgContext.drawImage(this.m_elm[0], 0,0);
 		this.m_context.clearRect(0, 0, this.m_width, this.m_height);
 		this.m_currentObj.smooth(this.m_step);
+		if (!this.m_currentObj.isLine()){
+			return;
+		}
 		this.m_bgObjects.push(this.m_currentObj);
-
+		this.m_elm.trigger("objectAdded", this.m_currentObj);
 		var json = this.m_currentObj.toJSONString();
 		$("#dbg").text(json);
+		this.m_currentObj = null;
 	},
 
 	addObject:function(obj){
+		for(var i=0;i<this.m_bgObjects.length;i++){
+			if (this.m_bgObjects[i].id == obj.id){
+				return;
+			}
+		}
 		this.m_bgObjects.push(obj);
 		this.drawLine(obj, this.m_bgContext);
 	},
 
-	deleteObjecst:function(objectIds){
+	deleteObjects:function(objectIds){
+		var deleted = false;
 		for(var i=0;i<objectIds.length;i++){
-			var objectId = objectIDs[i];
+			var objectId = objectIds[i];
 			for (var j=this.m_bgObjects.length-1;j>=0;j--){
-				if(objectId = this.m_bgObjects[j].id){
+				if(objectId == this.m_bgObjects[j].id){
 					this.m_bgObjects.splice(j,1);
+					deleted = true;
+					break;
 				}
 			}
+		}
+		if (deleted){
+			this.redrawBG();
 		}
 	},
 
