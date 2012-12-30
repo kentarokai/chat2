@@ -34,6 +34,13 @@ DrawingObject.prototype = {
 			});
 	},
 
+	addLastPoint:function(xPc, yPc){
+		if (1 < this.points.length){
+			this.points.splice(1, this.points.length-1);
+		}
+		this.addPoint(xPc, yPc);
+	},
+	
 	smooth:function(step){
 		var count = this.points.length;
 		this.smoothed = true;

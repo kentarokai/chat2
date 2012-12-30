@@ -22,7 +22,6 @@ CanvasManager.prototype = {
 	m_color:"rgba(255,0,255,1)",
 	m_lineWidth:2,
 	m_objSerial:1,
-
 	m_currentObj:null,
 	
 	init:function(instanceId, $wrap, $elm, $bg){
@@ -313,7 +312,16 @@ CanvasManager.prototype = {
 	},
 
 	onDrag:function(){
-		this.addCurrentPoint();
+		if ('event' in window
+			&& window.event
+			&& window.event.shiftKey){
+			this.m_currentObj.addLastPoint(
+				this._myRound(this.m_mouseX / this.m_width),
+				this._myRound(this.m_mouseY / this.m_height)
+				);
+		}else{
+			this.addCurrentPoint();
+		}
 		this.drawLine(this.m_currentObj, this.m_context);
 	},
 

@@ -1,7 +1,13 @@
-html,body,div,button,canvas,form,input,textarea {
+html,body,div,button,canvas,form,input,textarea,ul,li{
 	padding:0;
 	margin:0;
 	font-family:sans-serif;
+	font-size:12px;
+}
+
+button {
+	padding:5px;
+	margin-right:10px;
 }
 
 html{ 
@@ -21,7 +27,7 @@ body > #body {
 #wrap{
 	width:100%;
 	height:100%;
-	background-color:#ccc;
+	background-color:#ddd;
 	position:relative;
 	overflow:hidden;
 }
@@ -32,9 +38,9 @@ body > #body {
 	top:0px;
 	left:0px;
 	z-index:1;
-	box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.80);
-    -moz-box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.80);
-    -webkit-box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.80);
+	box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.60);
+    -moz-box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.60);
+    -webkit-box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.60);
 }
 
 .hidden{
@@ -70,15 +76,42 @@ body > #body {
 
 #control{
 	position:fixed;
-	width:195px;
+	width:205px;
 	height:100%;
 	z-index:5;
 	right:0px;
 	top:0px;
-	background-color:#eeeeee;
-	box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.80);
-    -moz-box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.80);
-    -webkit-box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.80);
+	background-color:#eee;
+	box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.60);
+    -moz-box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.60);
+    -webkit-box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.60);
+}
+
+.slidein#control{
+   animation-name            	: slidein-from-right;
+	-webkit-animation-name    	: slidein-from-right;
+    -moz-animation-name    		: slidein-from-right;
+	animation-duration        	: 0.7s;
+	-webkit-animation-duration	: 0.7s;
+	-moz-animation-duration		: 0.7s;
+	animation-timing-function        : cubic-bezier(0.25, 0, 0.25, 1);
+    -webkit-animation-timing-function: cubic-bezier(0.25, 0, 0.25, 1);
+    -moz-animation-timing-function: cubic-bezier(0.25, 0, 0.25, 1);
+}
+
+@keyframes slidein-from-right {
+  from { right: -210px; }
+  to   { right: 0px; }
+}
+
+@-webkit-keyframes slidein-from-right {
+  from { right: -210px; }
+  to   { right: 0px; }
+}
+
+@-moz-keyframes slidein-from-right {
+  from { right: -210px; }
+  to   { right: 0px; }
 }
 
 #cover{
@@ -104,17 +137,26 @@ body > #body {
 	
 }
 
+#topArea{
+	margin:5px 5px 0px 5px;
+	padding:5px;
+	background-color:#fff;
+	border:1px solid #ccc;
+}
+
 #color{
-	margin-top:5px;
-	width:100%;
-	height:195px;
+	margin:5px 0px 0px 5px;
 }
 
 #sensitivity{
 	display:none;
 }
 
-#lineWidthInput,
+#lineWidthSlider{
+	margin:10px 15px 0px 15px;
+	background-color:red;
+}
+
 #sensitivityInput
 {
 	margin-top:10px;
@@ -122,12 +164,12 @@ body > #body {
 }
 
 #linePreview{
-	margin-top:5px;
-	height:30px;
-	width:100%;
+	margin:10px 5px 0px 5px;
+	height:22px;
 	background-color:#fff;
 	position:relative;
 	text-align:center;
+	border:1px solid #ccc;
 }
 
 #linePreview .bar{
@@ -136,28 +178,50 @@ body > #body {
 	left:10%;
 }
 
-button {
-	margin-top:10px;
-	padding:5px;
-}
 
 #users{
-	margin-top:5px;
-	width:100%;
-	background-color:#fff;
+	margin:10px 5px 0px 6px;
+}
+
+#users ul{
+	display:block;
+	padding:0;
+	clear:both;
+}
+
+#users li{
+	display:block;
+	float:left;
+	margin-right:10px;
+	padding:2px 3px 3px 3px;
+	border-left:3px solid #ccc;
+}
+
+#downloadBtn{
+	display:block;
+	position:absolute;
+	margin-left:5px;
+	width:195px;
+	bottom:10px;
 }
 
 #uploadArea{
-	margin-top:10px;
-	width:100%;
+	margin:10px 5px 0px 5px;
+	padding:5px;
+	background-color:#fff;
+	border:1px solid #ccc;
+}
+
+#uploadArea button{
+	margin-top:5px;
 }
 
 #dbgArea{
 	position:absolute;
 	margin-top:10px;
-	width:100%;
 	height:100px;
 	bottom:0px;
+	display:none;
 }
 
 #dbg{
