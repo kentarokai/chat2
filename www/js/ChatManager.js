@@ -79,7 +79,7 @@ ChatManager.prototype = {
 			});
 		
 		$("#sensitivityInput").change(function(){_this.onSensitivityChanged($(this).val());});
-		$("#undo").click(function(){_this.onUndo();});
+		$("#undo").click(function(){_this.onUndo($(this));}).attr("disabled",1);
 		$("#clearLines").click(function(){_this.onClearLines();});
 
 		$("#uploadBtn").click(function(){_this.onUploadClick();return false});
@@ -99,7 +99,7 @@ ChatManager.prototype = {
 		$("#bg").css({width:height, height:height}).removeClass("hidden");;
 		$("#bgImg").css({width:height, height:height});
 		this.updateLinePreview();
-		this.setUserLine();
+		this.updateUserLinePreview();
 		this.m_cover.css("line-height", $("#wrap").height()+"px");
 	},
 
@@ -179,7 +179,7 @@ ChatManager.prototype = {
 				var name = data.users[i].name;
 				$("<li>").text(name).attr("data-name", name).appendTo(list);
 			}
-			this.setUserLine();
+			this.updateUserLinePreview();
 		}
 		
 		if (!data.events || !data.events.length){
@@ -259,7 +259,7 @@ ChatManager.prototype = {
 			this.m_canvasMgr.addObject(addObjects[i]);
 		}
 		this.m_canvasMgr.deleteObjects(deleteIds);
-		this.setUserLine();
+		this.updateUserLinePreview();
 		
 		if (bgImagePath){
 			this.setBGImage(bgImagePath);
@@ -278,7 +278,7 @@ ChatManager.prototype = {
 		},this.m_fetchInterval);
 	},
 
-	setUserLine:function(){
+	updateUserLinePreview:function(){
 		function componentToHex(c) {
 		    var hex = c.toString(16);
 		    return hex.length == 1 ? "0" + hex : hex;
@@ -317,6 +317,7 @@ ChatManager.prototype = {
 	onDrawingObjectAdded:function(obj){
 		this.m_sendEvents.push({action:"lineadd", obj: obj});
 		this.trySendEvents();
+		$("#undo").removeAttr("disabled");
 	},
 
 	trySendEvents:function(){
@@ -381,7 +382,7 @@ ChatManager.prototype = {
 		var _this = this;
 		setTimeout(function(){
 			_this.updateLinePreview();
-			_this.setUserLine();
+			_this.updateUserLinePreview();
 		},1);
 	},
 
@@ -391,7 +392,7 @@ ChatManager.prototype = {
 			this.m_canvasMgr.setLineWidth(parseInt(val, 10));
 			setTimeout(function(){
 				_this.updateLinePreview();
-				_this.setUserLine();
+				_this.updateUserLinePreview();
 			},1);
 		}
 	},
@@ -404,7 +405,10 @@ ChatManager.prototype = {
 
 	onUndo:function(){
 		if (this.m_canvasMgr){
-			this.m_canvasMgr.undo();
+			var enable = (this.m_canvasMgr.undo() > 0);
+			if (!enable){
+				$("#undo").attr("disabled","1");
+			}
 		}	
 	},
 
