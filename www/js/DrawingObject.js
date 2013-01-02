@@ -1,16 +1,25 @@
+var DrawingObjectType = {
+	UNKNOWN:'unknown',
+	LINE:'line'
+};
+
 function DrawingObject(){}
 DrawingObject.prototype = {
 
+	type:DrawingObjectType.UNKNOWN,
 	color:"rgba(255,0,255,1)",
 	lineWidth:2,
 	points:[],
 	id:0,
+	instanceId:0,
 	smoothed:false,
 	
-	init:function(instanceId, serial, color, lineWidth){
+	init:function(type, instanceId, serial, color, lineWidth){
+		this.type = type;
 		this.color = color;
 		this.lineWidth = lineWidth;
 		this.points = [];
+		this.instanceId = instanceId;
 		this.id = instanceId + "-" + serial;
 		this.smoothed = false;
 	},
@@ -21,6 +30,8 @@ DrawingObject.prototype = {
 		}
 		var obj = JSON.parse(str);
 		this.id = obj.id;
+		this.instanceId = (this.id.split("-"))[0];
+		this.type = obj.type;
 		this.color = obj.color;
 		this.lineWidth = obj.lineWidth;
 		this.points = obj.points;
@@ -59,8 +70,7 @@ DrawingObject.prototype = {
 		this.points = sPoints;
 	},
 
-	isLine:function(){
-		
+	hasLength:function(){
 		if (2 > this.points.length){
 			return false;
 		}
@@ -78,6 +88,7 @@ DrawingObject.prototype = {
 	toJSONString:function(){
 		var obj = {
 			id : this.id,
+			type: this.type,
 			lineWidth: this.lineWidth,
 			color : this.color,
 			points : this.points

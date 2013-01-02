@@ -121,7 +121,13 @@ jQuery._farbtastic = function (container, callback) {
     var el = event.target || event.srcElement;
     var reference = fb.wheel;
 
-    if (typeof event.offsetX != 'undefined') {
+    if (event.touches){
+	  var touches = event.touches;
+	  var pos = fb.absolutePosition(reference);
+      x = touches[0].pageX  - pos.x;
+      y = touches[0].pageY - pos.y;
+	 
+	} else if (typeof event.offsetX != 'undefined') {
       // Use offset coordinates and find common offsetParent
       var pos = { x: event.offsetX, y: event.offsetY };
 
@@ -217,6 +223,61 @@ jQuery._farbtastic = function (container, callback) {
     document.dragging = false;
   }
 
+	fb.touchstart = function(){
+		event.preventDefault();
+		
+		var touches = event.touches;
+		if (1 != touches.length){
+			return;
+		}
+		// Capture mouse
+	    if (!document.dragging) {
+	      document.dragging = true;
+	    }
+	
+	    // Check which area is being dragged
+	    var pos = fb.widgetCoords(event);
+	    fb.circleDrag = Math.max(Math.abs(pos.x), Math.abs(pos.y)) * 2 > fb.square;
+	    // Process
+	    fb.touchmove(event);
+	}
+
+	fb.touchmove = function (event) {
+		event.preventDefault();
+		var touches = event.touches;
+		if (1 != touches.length){
+			return;
+		}
+		
+		// Get coordinates relative to color picker center
+		var pos = fb.widgetCoords(event);
+		// Set new HSL parameters
+		setTimeout(function(){
+			if (fb.circleDrag) {
+			  var hue = Math.atan2(pos.x, -pos.y) / 6.28;
+			  if (hue < 0) hue += 1;
+			  fb.setHSL([hue, fb.hsl[1], fb.hsl[2]]);
+			}
+			else {
+			  var sat = Math.max(0, Math.min(1, -(pos.x / fb.square) + .5));
+			  var lum = Math.max(0, Math.min(1, -(pos.y / fb.square) + .5));
+			  fb.setHSL([fb.hsl[0], sat, lum]);
+			}
+		},1);
+		//return false;	
+	}
+
+	fb.touchend = function () {
+		event.preventDefault();
+		var touches = event.touches;
+		if (0 != touches.length){
+			return;
+		}
+		// Uncapture mouse
+		document.dragging = false;
+	}
+
+	
   /**
    * Update the markers and styles
    */
@@ -336,7 +397,9 @@ jQuery._farbtastic = function (container, callback) {
   //$('*', e).mousedown(fb.mousedown);
 
   if(!!('ontouchstart' in window)){
-	$('*', e).mousedown(fb.mousedown);
+	e.bind('touchstart', fb.touchstart);
+	e.bind('touchmove', function(e){fb.touchmove(event);});
+	e.bind('touchend', fb.touchend);
   }else{
 	$('*', e).mousedown(fb.mousedown);
   }

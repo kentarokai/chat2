@@ -144,6 +144,10 @@ body > #body {
 	border:1px solid #ccc;
 }
 
+#undo{
+	position:relative;
+}
+
 #color{
 	margin:5px 0px 0px 5px;
 }

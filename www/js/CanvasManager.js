@@ -3,6 +3,7 @@ CanvasManager.prototype = {
 
 	BASE_SIZE:640,
 	OUTPUT_SIZE:1024,
+	CTRL_DRAG_ANGLE_STEP:45,
 	m_instanceId:"",
 	m_step:3,
 	m_wrap:null,
@@ -147,19 +148,22 @@ CanvasManager.prototype = {
 	},
 
 	undo:function(){
+		var removed = false;
+		var remain = 0;
 		for(var i= this.m_bgObjects.length-1; i>= 0; i--){
-			var item = this.m_bgObjects[i];
-			var id = item.id;
-			var _array = id.split("-");
-			if (_array[0] == this.m_instanceId){
-				var obj = this.m_bgObjects[i];
-				this.m_bgObjects.splice(i,1);
-				this.redrawBG();
-				dbg(obj);
-				this.m_elm.trigger("objectDeleted", obj);
-				break;
+			var obj = this.m_bgObjects[i];
+			if (obj.instanceId == this.m_instanceId){
+				if (removed){
+					remain++;
+				}else{
+					this.m_bgObjects.splice(i,1);
+					this.redrawBG();
+					this.m_elm.trigger("objectDeleted", obj);
+					removed = true;
+				}
 			}
 		}
+		return remain;
 	},
 
 	clear:function(){
@@ -177,8 +181,8 @@ CanvasManager.prototype = {
 			this.m_isDragging = true;
 
 			var offset = this.m_elm.offset();
-			this.m_mouseX = e.clientX + offset.left;
-			this.m_mouseY = e.clientY + offset.top;
+			this.m_mouseX = e.clientX - offset.left;
+			this.m_mouseY = e.clientY - offset.top;
 			this.onStartDragging();
 		}
 	},
@@ -209,8 +213,8 @@ CanvasManager.prototype = {
 		}
 		
 		var offset = this.m_elm.offset();
-		this.m_mouseX = e.clientX + offset.left;
-		this.m_mouseY = e.clientY + offset.top;
+		this.m_mouseX = e.clientX - offset.left;
+		this.m_mouseY = e.clientY - offset.top;
 		this.onDrag();
 	},
 
@@ -225,8 +229,8 @@ CanvasManager.prototype = {
 			this.m_isDragging = true;
 
 			var offset = this.m_elm.offset();
-			this.m_mouseX = touches[0].pageX + offset.left;
-			this.m_mouseY = touches[0].pageY + offset.top;
+			this.m_mouseX = touches[0].pageX - offset.left;
+			this.m_mouseY = touches[0].pageY - offset.top;
 			this.onStartDragging();
 		}
 		
@@ -241,8 +245,8 @@ CanvasManager.prototype = {
 			return;
 		}
 		var offset = this.m_elm.offset();
-		this.m_mouseX = touches[0].pageX + offset.left;
-		this.m_mouseY = touches[0].pageY + offset.top;
+		this.m_mouseX = touches[0].pageX -offset.left;
+		this.m_mouseY = touches[0].pageY - offset.top;
 		
 		var _this = this;
 		setTimeout(function(){
@@ -266,7 +270,7 @@ CanvasManager.prototype = {
 	
 	onStartDragging:function(){
 		this.m_currentObj = new DrawingObject();
-		this.m_currentObj.init(this.m_instanceId, (this.m_objSerial++), this.m_color, this.m_lineWidth);
+		this.m_currentObj.init(DrawingObjectType.LINE, this.m_instanceId, (this.m_objSerial++), this.m_color, this.m_lineWidth);
 		this.addCurrentPoint();
 	},
 
@@ -274,7 +278,7 @@ CanvasManager.prototype = {
 		this.m_bgContext.drawImage(this.m_elm[0], 0,0);
 		this.m_context.clearRect(0, 0, this.m_width, this.m_height);
 		this.m_currentObj.smooth(this.m_step);
-		if (!this.m_currentObj.isLine()){
+		if (!this.m_currentObj.hasLength()){
 			return;
 		}
 		this.m_bgObjects.push(this.m_currentObj);
@@ -314,14 +318,50 @@ CanvasManager.prototype = {
 	onDrag:function(){
 		if ('event' in window
 			&& window.event
+			&& window.event.ctrlKey
+			&& this.m_currentObj
+			&& 0 < this.m_currentObj.points.length){
+			var step = this.CTRL_DRAG_ANGLE_STEP;
+			
+			var first = this.m_currentObj.points[0];
+			var now = {	x: this.m_mouseX / this.m_width,
+						y: this.m_mouseY / this.m_height};
+			var r = Math.sqrt((now.x - first.x) * (now.x - first.x)
+							  + (now.y - first.y) * (now.y - first.y));
+			var tan = (now.y - first.y) / (now.x - first.x);
+			var w = Math.atan(tan);
+			if (now.x < first.x){
+				w += Math.PI;
+			}else if (now.x > first.x
+					  && now.y < first.y){
+				w += Math.PI * 2;
+			}
+			w = w / Math.PI / 2 * 360;
+			w /= step;
+			w = Math.round(w);
+			w *= step;
+			if (w == 360){
+				w = 0;
+			}
+			w = w / 360 * Math.PI * 2;
+			var newX = Math.cos(w) * r + first.x;
+			var newY = Math.sin(w) * r + first.y;
+			
+			this.m_currentObj.addLastPoint(
+				this._myRound(newX),
+				this._myRound(newY)
+				);
+		} else if ('event' in window
+			&& window.event
 			&& window.event.shiftKey){
 			this.m_currentObj.addLastPoint(
 				this._myRound(this.m_mouseX / this.m_width),
 				this._myRound(this.m_mouseY / this.m_height)
 				);
-		}else{
+		} else{
 			this.addCurrentPoint();
 		}
+		this.m_context.clearRect(0, 0, this.m_width, this.m_height);
 		this.drawLine(this.m_currentObj, this.m_context);
 	},
 
@@ -344,8 +384,7 @@ CanvasManager.prototype = {
 	},
 	
 	drawLine:function(obj, ctx){
-		this.m_context.clearRect(0, 0, this.m_width, this.m_height);
-
+		
 		var step = obj.smoothed ? 1 : this.m_step;
 		var points = obj.points;
 		
@@ -380,6 +419,7 @@ CanvasManager.prototype = {
 
 		ctx.lineWidth = obj.lineWidth * this.m_height / this.BASE_SIZE;
 		ctx.strokeStyle = obj.color;
+		ctx.lineCap = "round";
 		ctx.stroke();
 	},
 	
