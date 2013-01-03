@@ -5,7 +5,7 @@ var DEFINE_ACTIVE_SEC = 30;
 var DEFINE_KEEP_EVENTS_SEC = 60;
 
 exports.list = function(req, res) {
-//	console.log(req.url);
+//	myutil.log(req.url);
 	
 	req.mysql.query(
 		"SELECT * FROM user",
