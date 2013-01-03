@@ -5,7 +5,7 @@ ChatManager.prototype = {
 	FETCH_RETRY:300,
 	FETCH_DEFAULT_INTERVAL:2000,
 	FETCH_MAX_INTERVAL:20000,
-	FETCH_FIRST:1500,
+	FETCH_FIRST:2000,
 	DEFAULT_LINE_COLOR:"#0000ff",
 	DEFAULT_LINE_WIDTH:2,
 
@@ -56,7 +56,7 @@ ChatManager.prototype = {
 		this.m_canvasMgr.init(this.m_instanceId, $("#wrap"), this.m_canvasElm, $("#bgCanvas"));
 		this.m_canvasMgr.setLineWidth(this.DEFAULT_LINE_WIDTH);
 
-		this.m_cover.css("line-height", $("#wrap").height()+"px");
+		this.m_cover.css("line-height", $("#wrap").height()+"px").addClass("animate");
 		
 		this.m_canvasElm.bind("objectDeleted", function(e, obj){
 			_this.onDrawingObjectDeleted(obj);
@@ -149,6 +149,7 @@ ChatManager.prototype = {
 	},
 
 	hideCover:function(){
+	
 		if (this.m_hideCoverTimer){
 			return;
 		}
@@ -378,6 +379,7 @@ ChatManager.prototype = {
 
 	onColorChanged:function(color){
 		this.m_lineColor = color;
+		dbg(color);
 		if (this.m_canvasMgr){
 			this.m_canvasMgr.setColor(color);
 		}
