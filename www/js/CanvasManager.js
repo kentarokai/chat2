@@ -318,7 +318,7 @@ CanvasManager.prototype = {
 	onDrag:function(){
 		if ('event' in window
 			&& window.event
-			&& window.event.ctrlKey
+			&& window.event.altKey
 			&& this.m_currentObj
 			&& 0 < this.m_currentObj.points.length){
 			var step = this.CTRL_DRAG_ANGLE_STEP;

@@ -1,3 +1,10 @@
+exports.log = function(o){
+	var s = JSON.stringify(o);
+	var now = new Date();
+	
+	console.log("[" + dateToFormattedString(now, "Y/m/d H:i:s") + "] " + s);
+}
+
 var tkurl_parser = exports.url_parser = function(req, res, callback) {
   var params = {};
   if (req.url && req.url.match(/^\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/?$/))

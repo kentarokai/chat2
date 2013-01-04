@@ -1,2 +1,3 @@
 connect
 mysql
+imagemagick

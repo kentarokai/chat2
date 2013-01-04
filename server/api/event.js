@@ -23,8 +23,10 @@ var deleteOldEvents = function(req, res, howOld, next){
 
 var deleteAllEvents = exports.deleteAllEvents = function(req, res, next, passThrough){
 
-	if (next && passThrough){
-		next();
+	if (passThrough){
+		if (next){
+			next();
+		}
 		return;
 	}
 	
@@ -43,11 +45,13 @@ var deleteAllEvents = exports.deleteAllEvents = function(req, res, next, passThr
 
 var deleteAllLineEvents = exports.deleteAllLineEvents = function(req, res, next, passThrough){
 
-	if (next && passThrough){
-		next();
+	if (passThrough){
+		if (next){
+			next();
+		}
 		return;
 	}
-	console.log("Delete all line events");
+	myutil.log("Delete all line events");
 	
 	req.mysql.query("DELETE FROM event WHERE action LIKE 'line%'",
 		function(err, result) {
@@ -61,6 +65,30 @@ var deleteAllLineEvents = exports.deleteAllLineEvents = function(req, res, next,
 			return;
 		});
 }
+
+var deleteAllImageEvents = exports.deleteAllImageEvents = function(req, res, next, passThrough){
+
+	if (passThrough){
+		if (next){
+			next();
+		}
+		return;
+	}
+	myutil.log("Delete all image events");
+	
+	req.mysql.query("DELETE FROM event WHERE action LIKE 'image%'",
+		function(err, result) {
+			if (err) {
+				res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
+				return;
+			}
+			if (next){
+				next();
+			}
+			return;
+		});
+}
+
 
 exports.fetch = function(req, res){
 	user.heartbeatToDB(req, res, function(){
@@ -103,6 +131,36 @@ exports.fetch = function(req, res){
 	});
 }
 
+var _sendCore  = function(req, res, events, instanceId){
+	var now = new Date();
+	var nowStr = myutil.buildDateTimeStr(now);
+
+	var query = "INSERT INTO event (ctime, action, value, userId, instanceId) VALUES";
+	var values = [];
+	for(var i=0;i<events.length;i++){
+		var event = events[i];
+		if (0!=i){
+			query += ",";
+		}
+		query += "(?, ?, ?, " + req.userId + ", " + instanceId + ")";
+		values.push(nowStr);
+		values.push(event.action);
+		values.push(event.value);
+	}
+	req.mysql.query(query,
+		values,
+		function(err, result) {
+			if (err) {
+				res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
+				return;
+			}
+			user.getActiveUsers(req, res, function(users){
+				res.end(myutil.buildJSONPResponse(req, {'stat': 'ok', user: {id: req.userId, name: req.userName}, users: users}));
+			return;
+			});
+		});
+};
+
 exports.send = function(req, res){
 
 	user.heartbeatToDB(req, res, function(){
@@ -121,12 +179,14 @@ exports.send = function(req, res){
 		}
 
 		var clearLineIndex = -1;
+		var imageEventIndex = -1;
 		var events = req.body.events;
 		for(var i=0;i<req.body.events.length;i++){
 			var event = req.body.events[i];
-			if ("lineclear" == event.action){
+			if ("lineclear" == event.action && clearLineIndex < 0){
 				clearLineIndex = i;
-				break;
+			}else if (event.action.match(/^image/i)){
+				imageEventIndex = i;
 			}
 		}
 		var clearLines = false;
@@ -136,36 +196,13 @@ exports.send = function(req, res){
 			clearLines = true;
 		}
 
-		deleteAllLineEvents(req, res, function(){
-			var now = new Date();
-			var nowStr = myutil.buildDateTimeStr(now);
-	
-			var query = "INSERT INTO event (ctime, action, value, userId, instanceId) VALUES";
-			var values = [];
-			for(var i=0;i<events.length;i++){
-				var event = events[i];
-				if (0!=i){
-					query += ",";
-				}
-				query += "(?, ?, ?, " + req.userId + ", " + instanceId + ")";
-				values.push(nowStr);
-				values.push(event.action);
-				values.push(event.value);
-			}
-			req.mysql.query(query,
-				values,
-				function(err, result) {
-					if (err) {
-						res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
-						return;
-					}
-					user.getActiveUsers(req, res, function(users){
-						res.end(myutil.buildJSONPResponse(req, {'stat': 'ok', user: {id: req.userId, name: req.userName}, users: users}));
-					return;
-					});
-				});
-		}, !clearLines);
-		
+		var clearImage = (0 <= imageEventIndex);
+
+		deleteAllImageEvents(req, res, function(){
+			deleteAllLineEvents(req, res, function(){
+				_sendCore(req, res, events, instanceId);
+			}, !clearLines);
+		}, !clearImage);
 	});
 	
 }
