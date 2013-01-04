@@ -1,14 +1,30 @@
+/*このファイルはUTF8nで保存されています*/
+
 html,body,div,button,canvas,form,input,textarea,ul,li{
 	padding:0;
 	margin:0;
-	font-family:sans-serif;
+	font-family:メイリオ,sans-serif;
 	font-size:12px;
 }
 
 button {
-	padding:7px;
+	padding:6px;
 	margin-right:10px;
+	-webkit-border-radius: 0px;
+	-moz-border-radius: 0px;
+	border-radius: 0px;
 }
+
+@media all and (device-width: 768px) and (device-height: 1024px) {
+	button {
+		-webkit-appearance:none;
+		background-color:#ddd;
+	}
+	button[disabled]{
+		background-color:#ccc;
+	}
+}
+
 
 html{ 
     height: 100%; 
@@ -63,6 +79,7 @@ body > #body {
 	top:0px;
 	left:0px;
 	z-index:3;
+	font-family:sans-serif;
 }
 
 #canvas{
@@ -71,6 +88,7 @@ body > #body {
 	left:0px;
 	z-index:4;
 	cursor:default;
+	font-family:sans-serif;
 }
 
 
@@ -107,8 +125,10 @@ body > #body {
 }
 
 @-webkit-keyframes slidein-from-right {
-  from { right: -210px; }
-  to   { right: 0px; }
+  from { right: -210px;
+ }
+  to   { right: 0px; 
+}
 }
 
 @-moz-keyframes slidein-from-right {
@@ -140,7 +160,7 @@ body > #body {
 
 .title#cover{
 	opacity:1.0;
-	background-color:#fff;
+	background-color:#eee;
 }
 
 .title#cover .logo{
@@ -181,6 +201,26 @@ body > #body {
 
 #undo{
 	position:relative;
+	width:40px;
+}
+
+#clearLines{
+	position:relative;
+}
+
+
+#undo:after{
+	content:" ";
+	display:block;
+	width:100%;
+	height:100%;
+	background-image:url(../img/icon-undo.svgz);
+	background-repeat:no-repeat;
+	background-size:contain;
+	background-position:center center;
+	position:absolute;
+	left:0px;
+	top:0px;
 }
 
 #color{
@@ -238,9 +278,10 @@ body > #body {
 #users li{
 	display:block;
 	float:left;
-	margin-right:10px;
+	margin-right:8px;
 	padding:2px 3px 3px 3px;
 	border-left:3px solid #ccc;
+	font-size:11px;
 }
 
 #downloadBtn{
@@ -258,6 +299,84 @@ body > #body {
 /*	background-color:#fff;
 	border:1px solid #ccc;*/
 }
+
+#tool {
+	margin:10px 5px 0px 5px;
+	padding:5px;
+}
+
+#textCover{
+	position:absolute;
+	top:0px;
+	left:0px;
+	z-index:90;
+	width:100%;
+	height:100%;
+}
+
+.hidden#textCover{
+	display:none;
+}
+
+#textCover .textCoverBG{
+	position:absolute;
+	top:0px;
+	left:0px;
+	width:100%;
+	height:100%;
+	background-color:#bbb;
+	opacity:0.6;
+	cursor:text;
+}
+
+#textCover .textInputArea{
+	position:absolute;
+	top:0px;
+	left:0px;
+}
+
+#textCover .textInputArea #textInput{
+	padding:2px;
+	font-size:13px;
+	width:150px;
+	margin-right:10px;
+	font-family:sans-serif;
+}
+
+#textCover .textInputArea button{
+	position:absolute;
+	top:0px;
+}
+
+#textCover .textInputArea #textOKBtn{
+	left:170px;
+}
+
+
+#textCover .textHowTo{
+	position:fixed;
+	width:185px;
+	height:100px;
+	right:10px;
+	margin-right:0px;
+	bottom:50px;
+	font-size:19px;
+	color:#fff;
+	font-weight:bold;
+}
+
+#textCover .textHowTo:before {
+	content:"文字を入力する箇所をクリックしてください";
+}
+
+#textCancelBtn{
+	position:fixed;
+	width:185px;
+	right:10px;
+	margin-right:0px;
+	bottom:10px;
+}
+
 
 #uploadArea button{
 	margin-top:5px;

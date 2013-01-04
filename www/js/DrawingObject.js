@@ -1,7 +1,10 @@
 var DrawingObjectType = {
 	UNKNOWN:'unknown',
-	LINE:'line'
+	LINE:'line',
+	TEXT:'text'
 };
+
+var DrawingObjectSerial = 1;
 
 function DrawingObject(){}
 DrawingObject.prototype = {
@@ -13,15 +16,26 @@ DrawingObject.prototype = {
 	id:0,
 	instanceId:0,
 	smoothed:false,
-	
-	init:function(type, instanceId, serial, color, lineWidth){
+	text:"",
+
+	init:function(type, instanceId, color, lineWidth, text){
 		this.type = type;
 		this.color = color;
 		this.lineWidth = lineWidth;
 		this.points = [];
 		this.instanceId = instanceId;
-		this.id = instanceId + "-" + serial;
+		this.id = instanceId + "-" + (DrawingObjectSerial++);
 		this.smoothed = false;
+		this.text = text;
+	},
+
+	initForLine:function(instanceId,  color, lineWidth){
+		this.init(DrawingObjectType.LINE, instanceId, color, lineWidth, "");
+	},
+
+	initForText:function(instanceId, text, color, xPc, yPc){
+		this.init(DrawingObjectType.TEXT, instanceId, color, 1, text);
+		this.addPoint(xPc, yPc);
 	},
 
 	initWithJSONString:function(str){
@@ -35,6 +49,7 @@ DrawingObject.prototype = {
 		this.color = obj.color;
 		this.lineWidth = obj.lineWidth;
 		this.points = obj.points;
+		this.text = obj.text;
 		this.smoothed = true;
 	},
 	
@@ -91,7 +106,8 @@ DrawingObject.prototype = {
 			type: this.type,
 			lineWidth: this.lineWidth,
 			color : this.color,
-			points : this.points
+			points : this.points,
+			text: this.text
 		}
 		if ('JSON' in window){
 			return JSON.stringify(obj);
