@@ -1,3 +1,4 @@
+/*このファイルはUTF8nで保存されています*/
 function CanvasManager(){}
 CanvasManager.prototype = {
 
@@ -22,7 +23,6 @@ CanvasManager.prototype = {
 	m_bgObjects:[],
 	m_color:"rgba(255,0,255,1)",
 	m_lineWidth:2,
-	m_objSerial:1,
 	m_currentObj:null,
 	
 	init:function(instanceId, $wrap, $elm, $bg){
@@ -90,10 +90,11 @@ CanvasManager.prototype = {
 	},
 	
 	redrawBG:function(){
+		dbg(this.m_bgObjects);
 		this.m_bgContext.clearRect(0, 0, this.m_width, this.m_height);
 		for(var i=0;i<this.m_bgObjects.length;i++){
 			var obj = this.m_bgObjects[i];
-			this.drawLine(obj, this.m_bgContext);
+			this.draw(obj, this.m_bgContext);
 		}
 	},
 
@@ -131,7 +132,7 @@ CanvasManager.prototype = {
 		this.m_height = h;
 		for(var i=0;i<this.m_bgObjects.length;i++){
 			var obj = this.m_bgObjects[i];
-			this.drawLine(obj, outContext);
+			this.draw(obj, outContext);
 		}
 		this.m_width = widthSave;
 		this.m_height = heightSave;
@@ -172,6 +173,46 @@ CanvasManager.prototype = {
 		this.m_bgContext.clearRect(0, 0, this.m_width, this.m_height);
 		this.m_isDragging = false;
 		this.m_currentObj = null;
+	},
+
+	addObject:function(obj){
+		for(var i=0;i<this.m_bgObjects.length;i++){
+			if (this.m_bgObjects[i].id == obj.id){
+				return;
+			}
+		}
+		this.m_bgObjects.push(obj);
+		this.draw(obj, this.m_bgContext);
+	},
+
+	deleteObjects:function(objectIds){
+		var deleted = false;
+		for(var i=0;i<objectIds.length;i++){
+			var objectId = objectIds[i];
+			for (var j=this.m_bgObjects.length-1;j>=0;j--){
+				if(objectId == this.m_bgObjects[j].id){
+					this.m_bgObjects.splice(j,1);
+					deleted = true;
+					break;
+				}
+			}
+		}
+		if (deleted){
+			this.redrawBG();
+		}
+	},
+
+	addText:function(text, xPx, yPx){
+		var obj = new DrawingObject();
+		obj.initForText(this.m_instanceId,
+						text,
+						this.m_color,
+						this._myRound(xPx / this.m_width),
+						this._myRound(yPx / this.m_height));
+		this.addObject(obj);
+		this.draw(obj, this.m_bgContext);
+
+		return obj;
 	},
 	
 	onMouseDown:function(e){
@@ -270,7 +311,7 @@ CanvasManager.prototype = {
 	
 	onStartDragging:function(){
 		this.m_currentObj = new DrawingObject();
-		this.m_currentObj.init(DrawingObjectType.LINE, this.m_instanceId, (this.m_objSerial++), this.m_color, this.m_lineWidth);
+		this.m_currentObj.initForLine(this.m_instanceId, this.m_color, this.m_lineWidth);
 		this.addCurrentPoint();
 	},
 
@@ -286,33 +327,6 @@ CanvasManager.prototype = {
 		var json = this.m_currentObj.toJSONString();
 		$("#dbg").text(json);
 		this.m_currentObj = null;
-	},
-
-	addObject:function(obj){
-		for(var i=0;i<this.m_bgObjects.length;i++){
-			if (this.m_bgObjects[i].id == obj.id){
-				return;
-			}
-		}
-		this.m_bgObjects.push(obj);
-		this.drawLine(obj, this.m_bgContext);
-	},
-
-	deleteObjects:function(objectIds){
-		var deleted = false;
-		for(var i=0;i<objectIds.length;i++){
-			var objectId = objectIds[i];
-			for (var j=this.m_bgObjects.length-1;j>=0;j--){
-				if(objectId == this.m_bgObjects[j].id){
-					this.m_bgObjects.splice(j,1);
-					deleted = true;
-					break;
-				}
-			}
-		}
-		if (deleted){
-			this.redrawBG();
-		}
 	},
 
 	onDrag:function(){
@@ -362,7 +376,7 @@ CanvasManager.prototype = {
 			this.addCurrentPoint();
 		}
 		this.m_context.clearRect(0, 0, this.m_width, this.m_height);
-		this.drawLine(this.m_currentObj, this.m_context);
+		this.draw(this.m_currentObj, this.m_context);
 	},
 
 	addCurrentPoint:function(){
@@ -381,6 +395,27 @@ CanvasManager.prototype = {
 			x: pc.x * this.m_width,
 			y: pc.y * this.m_height
 		};
+	},
+
+	draw:function(obj, ctx){
+		if (DrawingObjectType.LINE == obj.type){
+			this.drawLine(obj, ctx);
+		}else if (DrawingObjectType.TEXT == obj.type){
+			this.drawText(obj, ctx);
+		}
+	},
+
+	drawText:function(obj, ctx){
+
+		if (!obj.points.length){
+			return;
+		}
+		var first = obj.points[0];
+		var pos = this._pc2px(first);
+		var fontsize = 14 * this.m_height / this.BASE_SIZE;
+		ctx.fillStyle = obj.color;;
+		ctx.font = fontsize + "px sans-serif";
+		ctx.fillText(obj.text, pos.x, pos.y);  
 	},
 	
 	drawLine:function(obj, ctx){
