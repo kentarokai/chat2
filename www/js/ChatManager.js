@@ -28,6 +28,13 @@ ChatManager.prototype = {
 	m_bgImage:null,
 	m_myName:"",
 	m_userLineSettings:null,
+	m_coverLock:false,
+	m_textCover:null,
+	m_textCoverBG:null,
+	m_textCoverInputArea:null,
+	m_textInput:null,
+	m_textX:0,
+	m_textY:0,
 	
 	init:function(){
 		var _this = this;
@@ -43,7 +50,6 @@ ChatManager.prototype = {
 		if(!!('ontouchstart' in window)){
 			$("body").addClass("touch");
 		}
-
 		
 		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
 		this.m_userLineSettings = {};
@@ -91,7 +97,16 @@ ChatManager.prototype = {
 		$("#downloadBtn").click(function(){_this.onDownloadClick();return false});
 
 		$(window).bind("keydown.ctrl_z keydown.meta_z", function(){_this.onUndo();});
-		
+
+		$("#textBtn").click(function(){_this.onTextBtnClicked();});
+		this.m_textCover = $("#textCover");
+		this.m_textCoverBG = $("#textCover .textCoverBG").click(function(){_this.onTextCoverBGClicked()});
+		this.m_textCoverInputArea = $("#textCover .textInputArea").hide();
+		this.m_textInput = $("#textInput").keydown(function(){_this.onTextInputKeyDown();});
+		$("#textOKBtn").click(function(){_this.onTextOKBtnClicked();});
+		$("#textCancelBtn").click(function(){_this.onTextCancelBtnClicked();});
+//		$(window).keydown(function(){_this.onWindowKeyDown();});
+						  
 		setTimeout(function(){_this.onResized();}, 500);
 		setTimeout(function(){_this.fetch();}, this.FETCH_FIRST);
 	},
@@ -149,7 +164,10 @@ ChatManager.prototype = {
 	},
 
 	hideCover:function(){
-	
+		if (this.m_coverLock){
+			return;
+		}
+		
 		if (this.m_hideCoverTimer){
 			return;
 		}
@@ -430,7 +448,7 @@ ChatManager.prototype = {
 		}
 		
 		this.m_cover.fadeIn();
-		
+		$("#undo").attr("disabled","1");
 		var _this = this;
 		this.m_sendEvents.push({action:"lineclear", obj: null});
 		this.sendEvents(function(data){
@@ -456,21 +474,6 @@ ChatManager.prototype = {
 		}
 		$("#downloadFormData").val(data);
 		$("#downloadForm")[0].submit();
-		/*
-		$.ajax({
-			type: "POST",
-			url: "./api/image/convert",
-			data: {
-				data: data
-			},
-			success:function(data){
-				dbg(data);
-				if (data.path){
-					window.open(data.path);
-				}
-			}
-		});
-		*/
 	},
 
 	onClearImageClick:function(){
@@ -489,14 +492,20 @@ ChatManager.prototype = {
 		if (!file){
 			return;
 		}
-//		this.m_cover.fadeIn();
-        $('#uploadFields').upload('./api/image/upload', function(res) {
-//			this.hideCover();
-			if (res && "ok" == res.stat && res.path){
-				_this.onImageUploaded(res);
-			}
-        }, 'json');
-        
+		this.m_coverLock = true;
+		this.m_cover.fadeIn(400,function(){
+			dbg('start uploading');
+	        $('#uploadFields').upload('./api/image/upload', function(res) {
+				dbg(res);
+				_this.m_coverLock = false;
+				_this.hideCover();
+				if (res && "ok" == res.stat && res.path){
+					_this.onImageUploaded(res);
+				}else{
+					_this.hideCover();
+				}
+	        }, 'json');
+		});
 	},
 
 	onImageUploaded:function(data){
@@ -517,6 +526,10 @@ ChatManager.prototype = {
 			var _this = this;
 			img.onload = function(){
 				_this.m_bgImage = img;
+				
+			}
+			img.onerror = function(){
+				
 			}
 			$("#cleagImgBtn").removeAttr("disabled");
 		}else{
@@ -528,6 +541,57 @@ ChatManager.prototype = {
 
 	clearBGImage:function(){
 		this.setBGImage("");
+	},
+
+	onTextBtnClicked:function(){
+		this.m_textCover.removeClass("hidden");
+		this.m_textCoverInputArea.hide()
+	},
+	
+	onTextCoverBGClicked:function(){
+		this.m_textX = event.clientX;
+		this.m_textY = event.clientY - 9;
+		this.m_textCoverInputArea.show().css({
+			left: this.m_textX + "px",
+			top: this.m_textY + "px"
+		});
+		this.m_textInput[0].focus();
+	},
+
+	onTextOKBtnClicked:function(){
+		this.inputText();
+		this.m_textCover.addClass("hidden");
+		this.m_textInput.val("")
+	},
+
+	inputText:function(){
+		var text = $.trim(this.m_textInput.val());
+		if (!text){
+			return;
+		}
+		var obj = this.m_canvasMgr.addText(text,
+								 this.m_textX + 2,
+								 this.m_textY + 17);
+		this.onDrawingObjectAdded(obj);
+	},
+
+	onTextCancelBtnClicked:function(){
+		this.m_textCover.addClass("hidden");
+	},
+
+	onTextInputKeyDown:function(){
+		if (13 == event.keyCode){
+			this.onTextOKBtnClicked();
+		}else if (27 == event.keyCode){
+			this.onTextCancelBtnClicked();
+		}
+		event.cancelBubble = true;
+	},
+
+	onWindowKeyDown:function(){
+		if (!this.m_textCover.hasClass("hidden")){
+			this.onTextCancelBtnClicked();
+		}
 	},
 	
 	dummy:null
