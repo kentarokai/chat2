@@ -8,6 +8,7 @@ html,body,div,button,canvas,form,input,textarea,ul,li{
 }
 
 button {
+	position:relative;
 	padding:6px;
 	margin-right:10px;
 	-webkit-border-radius: 0px;
@@ -199,28 +200,32 @@ body > #body {
 	border:1px solid #ccc;
 }
 
-#undo{
-	position:relative;
+#undo,
+#textBtn
+{
 	width:40px;
 }
 
-#clearLines{
-	position:relative;
-}
-
-
-#undo:after{
+#undo:after,
+#textBtn:after{
 	content:" ";
 	display:block;
 	width:100%;
 	height:100%;
-	background-image:url(../img/icon-undo.svgz);
 	background-repeat:no-repeat;
 	background-size:contain;
 	background-position:center center;
 	position:absolute;
 	left:0px;
 	top:0px;
+}
+
+#undo:after{
+	background-image:url(../img/icon-undo.svgz);
+}
+
+button[disabled]#undo:after{
+	background-image:url(../img/icon-undo-disabled.svgz);
 }
 
 #color{
@@ -254,8 +259,6 @@ body > #body {
 	text-align:center;
 	border:1px solid #ccc;
 }
-
-
 
 #linePreview .bar{
 	position:relative;
@@ -303,6 +306,14 @@ body > #body {
 #tool {
 	margin:10px 5px 0px 5px;
 	padding:5px;
+}
+
+#textBtn:after{
+	background-image:url(../img/icon-text.svgz);
+}
+
+button[disabled]#textBtn:after{
+	background-image:url(../img/icon-text-disabled.svgz);
 }
 
 #textCover{
