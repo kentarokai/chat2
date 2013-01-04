@@ -1,12 +1,16 @@
+//このファイルはUTF8nで保存されています
 function ChatManager(){}
 ChatManager.prototype = {
 
 	FETCH_RETRY:300,
 	FETCH_DEFAULT_INTERVAL:2000,
 	FETCH_MAX_INTERVAL:20000,
-	FETCH_FIRST:1500,
+	FETCH_FIRST:2000,
 	DEFAULT_LINE_COLOR:"#0000ff",
 	DEFAULT_LINE_WIDTH:2,
+
+	CONFIRM_TEXT_CLEARLINES:"すべての線を消去しますか？",
+	CONFIRM_TEXT_CLEARIMAGE:"背景画像を消去しますか？",
 	
 	m_canvasMgr:null,
 	m_resizeTimer:null,
@@ -52,7 +56,7 @@ ChatManager.prototype = {
 		this.m_canvasMgr.init(this.m_instanceId, $("#wrap"), this.m_canvasElm, $("#bgCanvas"));
 		this.m_canvasMgr.setLineWidth(this.DEFAULT_LINE_WIDTH);
 
-		this.m_cover.css("line-height", $("#wrap").height()+"px");
+		this.m_cover.css("line-height", $("#wrap").height()+"px").addClass("animate");
 		
 		this.m_canvasElm.bind("objectDeleted", function(e, obj){
 			_this.onDrawingObjectDeleted(obj);
@@ -79,12 +83,14 @@ ChatManager.prototype = {
 			});
 		
 		$("#sensitivityInput").change(function(){_this.onSensitivityChanged($(this).val());});
-		$("#undo").click(function(){_this.onUndo($(this));}).attr("disabled",1);
+		$("#undo").click(function(){_this.onUndo();}).attr("disabled",1);
 		$("#clearLines").click(function(){_this.onClearLines();});
 
 		$("#uploadBtn").click(function(){_this.onUploadClick();return false});
-		$("#cleagImgBtn").click(function(){_this.onClearImageClick();return false});
+		$("#cleagImgBtn").click(function(){_this.onClearImageClick();return false}).attr("disabled",1);
 		$("#downloadBtn").click(function(){_this.onDownloadClick();return false});
+
+		$(window).bind("keydown.ctrl_z keydown.meta_z", function(){_this.onUndo();});
 		
 		setTimeout(function(){_this.onResized();}, 500);
 		setTimeout(function(){_this.fetch();}, this.FETCH_FIRST);
@@ -143,6 +149,7 @@ ChatManager.prototype = {
 	},
 
 	hideCover:function(){
+	
 		if (this.m_hideCoverTimer){
 			return;
 		}
@@ -372,6 +379,7 @@ ChatManager.prototype = {
 
 	onColorChanged:function(color){
 		this.m_lineColor = color;
+		dbg(color);
 		if (this.m_canvasMgr){
 			this.m_canvasMgr.setColor(color);
 		}
@@ -413,9 +421,14 @@ ChatManager.prototype = {
 	},
 
 	onClearLines:function(){
+		if(!window.confirm(this.CONFIRM_TEXT_CLEARLINES)){
+			return;
+		}
+
 		if (this.m_canvasMgr){
 			this.m_canvasMgr.clear();
 		}
+		
 		this.m_cover.fadeIn();
 		
 		var _this = this;
@@ -461,6 +474,10 @@ ChatManager.prototype = {
 	},
 
 	onClearImageClick:function(){
+		if(!window.confirm(this.CONFIRM_TEXT_CLEARIMAGE)){
+			return;
+		}
+		
 		this.clearBGImage();
 		this.m_sendEvents.push({action:"imagedelete"});
 		this.sendEvents(null)
@@ -472,7 +489,9 @@ ChatManager.prototype = {
 		if (!file){
 			return;
 		}
+//		this.m_cover.fadeIn();
         $('#uploadFields').upload('./api/image/upload', function(res) {
+//			this.hideCover();
 			if (res && "ok" == res.stat && res.path){
 				_this.onImageUploaded(res);
 			}
@@ -499,9 +518,11 @@ ChatManager.prototype = {
 			img.onload = function(){
 				_this.m_bgImage = img;
 			}
+			$("#cleagImgBtn").removeAttr("disabled");
 		}else{
 			elm.css("background-image", "");
 			this.m_bgImage = null;
+			$("#cleagImgBtn").attr("disabled",1);
 		}
 	},
 
