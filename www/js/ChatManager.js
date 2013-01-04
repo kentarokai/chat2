@@ -29,10 +29,10 @@ ChatManager.prototype = {
 	m_myName:"",
 	m_userLineSettings:null,
 	m_coverLock:false,
-	m_textCover:null,
-	m_textCoverBG:null,
-	m_textCoverBG2:null,
-	m_textCoverInputArea:null,
+	m_toolCover:null,
+	m_toolCoverBG:null,
+	m_toolCoverBG2:null,
+	m_toolCoverInputArea:null,
 	m_textInput:null,
 	m_textX:0,
 	m_textY:0,
@@ -100,13 +100,14 @@ ChatManager.prototype = {
 		$(window).bind("keydown.ctrl_z keydown.meta_z", function(){_this.onUndo();});
 
 		$("#textBtn").click(function(){_this.onTextBtnClicked();});
-		this.m_textCover = $("#textCover");
-		this.m_textCoverBG = $("#textCover .textCoverBG").click(function(){_this.onTextCoverBGClicked()});
-		this.m_textCoverBG2 = $("#textCover .textCoverBG2");
-		this.m_textCoverInputArea = $("#textCover .textInputArea").hide();
+		$("#circleBtn").click(function(){_this.onCircleBtnClicked();});
+		this.m_toolCover = $("#toolCover");
+		this.m_toolCoverBG = $("#toolCover .toolCoverBG").click(function(){_this.onToolCoverBGClicked()});
+		this.m_toolCoverBG2 = $("#toolCover .toolCoverBG2");
+		this.m_toolCoverInputArea = $("#toolCover .textInputArea").hide();
 		this.m_textInput = $("#textInput").keydown(function(){_this.onTextInputKeyDown();});
 		$("#textOKBtn").click(function(){_this.onTextOKBtnClicked();});
-		$("#textCancelBtn").click(function(){_this.onTextCancelBtnClicked();});
+		$("#toolCancelBtn").click(function(){_this.onToolCancelBtnClicked();});
 //		$(window).keydown(function(){_this.onWindowKeyDown();});
 						  
 		setTimeout(function(){_this.onResized();}, 500);
@@ -126,7 +127,7 @@ ChatManager.prototype = {
 		this.m_cover.css("line-height", $("#wrap").height()+"px");
 
 		var controlWidth = $("#control").width();
-		this.m_textCoverBG2.css("width", Math.max($("#wrap").width()-height, controlWidth) + "px");
+		this.m_toolCoverBG2.css("width", Math.max($("#wrap").width()-height, controlWidth) + "px");
 	},
 
 	updateLinePreview:function(){
@@ -348,6 +349,7 @@ ChatManager.prototype = {
 		this.m_sendEvents.push({action:"lineadd", obj: obj});
 		this.trySendEvents();
 		$("#undo").removeAttr("disabled");
+		this.hideToolCover();
 	},
 
 	trySendEvents:function(){
@@ -553,16 +555,35 @@ ChatManager.prototype = {
 
 	onTextBtnClicked:function(){
 		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
-		this.m_textCover.removeClass("hidden");
-		this.m_textCoverInputArea.hide();
-		$(".textHowTo", this.m_textCover).addClass("slidein");
-		$("#textCancelBtn").addClass("slidein");
+		this.m_toolCover.removeClass("hidden").addClass("text");
+		this.m_toolCoverInputArea.hide();
+		$(".toolHowTo", this.m_toolCover).addClass("slidein");
+		$("#toolCancelBtn").addClass("slidein");
+	},
+
+	onCircleBtnClicked:function(){
+		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
+		this.m_toolCover.removeClass("hidden").addClass("circle");
+		this.m_toolCoverInputArea.hide();
+		$(".toolHowTo", this.m_toolCover).addClass("slidein");
+		$("#toolCancelBtn").addClass("slidein");
+		this.m_canvasMgr.setMode(CanvasManagerMode.CIRCLE);
+	},
+
+	hideToolCover:function(){
+		this.m_toolCover.addClass("hidden").removeClass("text").removeClass("circle");
+		$(".toolHowTo", this.m_toolCover).removeClass("slidein");
+		$("#toolCancelBtn").removeClass("slidein");
+		this.m_canvasMgr.setMode(CanvasManagerMode.DEFAULT);
 	},
 	
-	onTextCoverBGClicked:function(){
+	onToolCoverBGClicked:function(){
+		if (!this.m_toolCover.hasClass("text")){
+			return;
+		}
 		this.m_textX = event.clientX;
 		this.m_textY = event.clientY - 9;
-		this.m_textCoverInputArea.show().css({
+		this.m_toolCoverInputArea.show().css({
 			left: this.m_textX + "px",
 			top: this.m_textY + "px"
 		});
@@ -571,10 +592,8 @@ ChatManager.prototype = {
 
 	onTextOKBtnClicked:function(){
 		this.inputText();
-		this.m_textCover.addClass("hidden");
 		this.m_textInput.val("");
-		$(".textHowTo", this.m_textCover).removeClass("slidein");
-		$("#textCancelBtn").removeClass("slidein");
+		this.hideToolCover();
 	},
 
 	inputText:function(){
@@ -588,24 +607,22 @@ ChatManager.prototype = {
 		this.onDrawingObjectAdded(obj);
 	},
 
-	onTextCancelBtnClicked:function(){
-		this.m_textCover.addClass("hidden");
-		$(".textHowTo", this.m_textCover).removeClass("slidein");
-		$("#textCancelBtn").removeClass("slidein");
+	onToolCancelBtnClicked:function(){
+		this.hideToolCover();
 	},
 
 	onTextInputKeyDown:function(){
 		if (13 == event.keyCode){
 			this.onTextOKBtnClicked();
 		}else if (27 == event.keyCode){
-			this.onTextCancelBtnClicked();
+			this.onToolCancelBtnClicked();
 		}
 		event.cancelBubble = true;
 	},
 
 	onWindowKeyDown:function(){
-		if (!this.m_textCover.hasClass("hidden")){
-			this.onTextCancelBtnClicked();
+		if (!this.m_toolCover.hasClass("hidden")){
+			this.onToolCancelBtnClicked();
 		}
 	},
 	

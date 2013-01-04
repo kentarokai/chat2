@@ -10,7 +10,7 @@ html,body,div,button,canvas,form,input,textarea,ul,li{
 button {
 	position:relative;
 	padding:6px;
-	margin-right:10px;
+	margin-right:5px;
 	-webkit-border-radius: 0px;
 	-moz-border-radius: 0px;
 	border-radius: 0px;
@@ -196,13 +196,15 @@ body > #body {
 }
 
 #undo,
-#textBtn
+#textBtn,
+#circleBtn
 {
 	width:40px;
 }
 
 #undo:after,
-#textBtn:after{
+#textBtn:after,
+#circleBtn:after{
 	content:" ";
 	display:block;
 	width:100%;
@@ -311,20 +313,32 @@ button[disabled]#textBtn:after{
 	background-image:url(../img/icon-text-disabled.svgz);
 }
 
-#textCover{
+#circleBtn:after{
+	background-image:url(../img/icon-circle.svgz);
+}
+
+button[disabled]#circleBtn:after{
+	background-image:url(../img/icon-circle-disabled.svgz);
+}
+
+#toolCover{
 	position:absolute;
 	top:0px;
-	left:0px;
+	right:0px;
 	z-index:90;
-	width:100%;
+	width:1%;
 	height:100%;
 }
 
-.hidden#textCover{
+.text#toolCover{
+	width:100%;
+}
+
+.hidden#toolCover{
 	display:none;
 }
 
-#textCover .textCoverBG{
+#toolCover .toolCoverBG{
 	position:absolute;
 	top:0px;
 	left:0px;
@@ -333,9 +347,14 @@ button[disabled]#textBtn:after{
 	background-color:#fff;
 	opacity:0.0;
 	cursor:text;
+	display:none;
 }
 
-#textCover .textCoverBG2{
+.text#toolCover .toolCoverBG{
+	display:block;
+}
+
+#toolCover .toolCoverBG2{
 	position:absolute;
 	top:0px;
 	right:0px;
@@ -346,13 +365,13 @@ button[disabled]#textBtn:after{
 }
 
 
-#textCover .textInputArea{
+#toolCover .textInputArea{
 	position:absolute;
 	top:0px;
 	left:0px;
 }
 
-#textCover .textInputArea #textInput{
+#toolCover .textInputArea #textInput{
 	padding:2px;
 	font-size:13px;
 	width:150px;
@@ -360,33 +379,37 @@ button[disabled]#textBtn:after{
 	font-family:sans-serif;
 }
 
-#textCover .textInputArea button{
+#toolCover .textInputArea button{
 	position:absolute;
 	top:0px;
 }
 
-#textCover .textInputArea #textOKBtn{
+#toolCover .textInputArea #textOKBtn{
 	left:170px;
 }
 
 
-#textCover .textHowTo{
+#toolCover .toolHowTo{
 	position:fixed;
 	width:185px;
 	height:80px;
 	right:0px;
 	margin-right:10px;
 	bottom:50px;
-	font-size:19px;
+	font-size:18px;
 	color:#fff;
 	font-weight:bold;
 }
 
-#textCover .textHowTo:before {
+.text#toolCover .toolHowTo:before {
 	content:"文字を入力する場所をクリックする";
 }
 
-#textCancelBtn{
+.circle#toolCover .toolHowTo:before {
+	content:"円の中心からドラッグする(Shiftで正円)";
+}
+
+#toolCancelBtn{
 	position:fixed;
 	width:185px;
 	right:0px;
@@ -394,7 +417,7 @@ button[disabled]#textBtn:after{
 	bottom:10px;
 }
 
-.slidein#textCancelBtn{
+.slidein#toolCancelBtn{
 	animation-duration        	: 1.0s;
 	-webkit-animation-duration	: 1.0s;
 	-moz-animation-duration		: 1.0s;

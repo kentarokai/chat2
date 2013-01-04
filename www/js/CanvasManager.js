@@ -1,11 +1,19 @@
 /*このファイルはUTF8nで保存されています*/
+
+CanvasManagerMode = {
+	DEFAULT:1,
+	CIRCLE:2
+}
+
 function CanvasManager(){}
 CanvasManager.prototype = {
 
 	BASE_SIZE:640,
 	OUTPUT_SIZE:1024,
 	CTRL_DRAG_ANGLE_STEP:45,
+	CIRCLE_BEZIER_CONST:0.5522847,
 	m_instanceId:"",
+	m_mode:CanvasManagerMode.DEFAULT,
 	m_step:3,
 	m_wrap:null,
 	m_elm:null,
@@ -48,6 +56,10 @@ CanvasManager.prototype = {
 		}
 
 		this.m_bgObjects = [];
+	},
+
+	setMode:function(mode){
+		this.m_mode = mode;
 	},
 
 	onResized:function(){
@@ -311,7 +323,11 @@ CanvasManager.prototype = {
 	
 	onStartDragging:function(){
 		this.m_currentObj = new DrawingObject();
-		this.m_currentObj.initForLine(this.m_instanceId, this.m_color, this.m_lineWidth);
+		if (CanvasManagerMode.CIRCLE == this.m_mode){
+			this.m_currentObj.initForCircle(this.m_instanceId, this.m_color, this.m_lineWidth);
+		}else{
+			this.m_currentObj.initForLine(this.m_instanceId, this.m_color, this.m_lineWidth);
+		}
 		this.addCurrentPoint();
 	},
 
@@ -330,50 +346,75 @@ CanvasManager.prototype = {
 	},
 
 	onDrag:function(){
-		if ('event' in window
-			&& window.event
-			&& window.event.altKey
-			&& this.m_currentObj
-			&& 0 < this.m_currentObj.points.length){
-			var step = this.CTRL_DRAG_ANGLE_STEP;
-			
-			var first = this.m_currentObj.points[0];
-			var now = {	x: this.m_mouseX / this.m_width,
-						y: this.m_mouseY / this.m_height};
-			var r = Math.sqrt((now.x - first.x) * (now.x - first.x)
-							  + (now.y - first.y) * (now.y - first.y));
-			var tan = (now.y - first.y) / (now.x - first.x);
-			var w = Math.atan(tan);
-			if (now.x < first.x){
-				w += Math.PI;
-			}else if (now.x > first.x
-					  && now.y < first.y){
-				w += Math.PI * 2;
+		if (CanvasManagerMode.CIRCLE == this.m_mode){
+			if ('event' in window
+				&& window.event
+				&& window.event.shiftKey
+				&& this.m_currentObj
+				&& 0 < this.m_currentObj.points.length){
+				var center = this.m_currentObj.points[0];
+				var now = {	x: this.m_mouseX / this.m_width,
+							y: this.m_mouseY / this.m_height};
+				var dX = Math.abs(center.x - now.x);
+				var dY = Math.abs(center.y - now.y);
+				var dMax = Math.max(dX, dY);
+				
+				this.m_currentObj.addLastPoint(
+					this._myRound(center.x + dMax),
+					this._myRound(center.y + dMax)
+					);
+			}else{
+				this.m_currentObj.addLastPoint(
+						this._myRound(this.m_mouseX / this.m_width),
+						this._myRound(this.m_mouseY / this.m_height)
+						);
 			}
-			w = w / Math.PI / 2 * 360;
-			w /= step;
-			w = Math.round(w);
-			w *= step;
-			if (w == 360){
-				w = 0;
+		}else{
+			if ('event' in window
+				&& window.event
+				&& window.event.altKey
+				&& this.m_currentObj
+				&& 0 < this.m_currentObj.points.length){
+				var step = this.CTRL_DRAG_ANGLE_STEP;
+				
+				var first = this.m_currentObj.points[0];
+				var now = {	x: this.m_mouseX / this.m_width,
+							y: this.m_mouseY / this.m_height};
+				var r = Math.sqrt((now.x - first.x) * (now.x - first.x)
+								  + (now.y - first.y) * (now.y - first.y));
+				var tan = (now.y - first.y) / (now.x - first.x);
+				var w = Math.atan(tan);
+				if (now.x < first.x){
+					w += Math.PI;
+				}else if (now.x > first.x
+						  && now.y < first.y){
+					w += Math.PI * 2;
+				}
+				w = w / Math.PI / 2 * 360;
+				w /= step;
+				w = Math.round(w);
+				w *= step;
+				if (w == 360){
+					w = 0;
+				}
+				w = w / 360 * Math.PI * 2;
+				var newX = Math.cos(w) * r + first.x;
+				var newY = Math.sin(w) * r + first.y;
+				
+				this.m_currentObj.addLastPoint(
+					this._myRound(newX),
+					this._myRound(newY)
+					);
+			} else if ('event' in window
+				&& window.event
+				&& window.event.shiftKey){
+				this.m_currentObj.addLastPoint(
+					this._myRound(this.m_mouseX / this.m_width),
+					this._myRound(this.m_mouseY / this.m_height)
+					);
+			} else{
+				this.addCurrentPoint();
 			}
-			w = w / 360 * Math.PI * 2;
-			var newX = Math.cos(w) * r + first.x;
-			var newY = Math.sin(w) * r + first.y;
-			
-			this.m_currentObj.addLastPoint(
-				this._myRound(newX),
-				this._myRound(newY)
-				);
-		} else if ('event' in window
-			&& window.event
-			&& window.event.shiftKey){
-			this.m_currentObj.addLastPoint(
-				this._myRound(this.m_mouseX / this.m_width),
-				this._myRound(this.m_mouseY / this.m_height)
-				);
-		} else{
-			this.addCurrentPoint();
 		}
 		this.m_context.clearRect(0, 0, this.m_width, this.m_height);
 		this.draw(this.m_currentObj, this.m_context);
@@ -402,11 +443,12 @@ CanvasManager.prototype = {
 			this.drawLine(obj, ctx);
 		}else if (DrawingObjectType.TEXT == obj.type){
 			this.drawText(obj, ctx);
+		}else if (DrawingObjectType.CIRCLE == obj.type){
+			this.drawCircle(obj, ctx);
 		}
 	},
 
 	drawText:function(obj, ctx){
-
 		if (!obj.points.length){
 			return;
 		}
@@ -451,6 +493,41 @@ CanvasManager.prototype = {
 		}
 		point = this._pc2px(points[pointCount-1]);
 		ctx.lineTo(point.x, point.y);
+
+		ctx.lineWidth = obj.lineWidth * this.m_height / this.BASE_SIZE;
+		ctx.strokeStyle = obj.color;
+		ctx.lineCap = "round";
+		ctx.stroke();
+	},
+
+	drawCircle:function(obj, ctx){
+		if (!obj.points.length){
+			return;
+		}
+		ctx.beginPath();
+
+		var pc1 = obj.points[0];
+		var pos1 = this._pc2px(pc1);
+		var pc2 = obj.points[obj.points.length-1];
+		var pos2 = this._pc2px(pc2);
+		
+		var rx = Math.abs(pos1.x - pos2.x);
+		var ry = Math.abs(pos1.y - pos2.y);
+		var cx = pos1.x;
+		var cy = pos1.y;
+		ctx.moveTo(cx+rx, cy);
+		ctx.bezierCurveTo(cx+rx,	cy-ry*this.CIRCLE_BEZIER_CONST,
+						  cx+rx*this.CIRCLE_BEZIER_CONST,	cy-ry,
+						  cx,	cy-ry);
+		ctx.bezierCurveTo(cx-rx*this.CIRCLE_BEZIER_CONST,	cy-ry,
+						  cx-rx,	cy-ry*this.CIRCLE_BEZIER_CONST,
+						  cx-rx,	cy);
+		ctx.bezierCurveTo(cx-rx,	cy+ry*this.CIRCLE_BEZIER_CONST,
+						  cx-rx*this.CIRCLE_BEZIER_CONST,	cy+ry,
+						  cx,	cy+ry);
+		ctx.bezierCurveTo(cx+rx*this.CIRCLE_BEZIER_CONST,	cy+ry,
+						  cx+rx,	cy+ry*this.CIRCLE_BEZIER_CONST,
+						  cx+rx,	cy);
 
 		ctx.lineWidth = obj.lineWidth * this.m_height / this.BASE_SIZE;
 		ctx.strokeStyle = obj.color;

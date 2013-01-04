@@ -1,7 +1,8 @@
 var DrawingObjectType = {
 	UNKNOWN:'unknown',
 	LINE:'line',
-	TEXT:'text'
+	TEXT:'text',
+	CIRCLE:'circle'
 };
 
 var DrawingObjectSerial = 1;
@@ -36,6 +37,10 @@ DrawingObject.prototype = {
 	initForText:function(instanceId, text, color, xPc, yPc){
 		this.init(DrawingObjectType.TEXT, instanceId, color, 1, text);
 		this.addPoint(xPc, yPc);
+	},
+
+	initForCircle:function(instanceId,  color, lineWidth){
+		this.init(DrawingObjectType.CIRCLE, instanceId, color, lineWidth, "");
 	},
 
 	initWithJSONString:function(str){
