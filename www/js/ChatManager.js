@@ -9,8 +9,8 @@ ChatManager.prototype = {
 	DEFAULT_LINE_COLOR:"#0000ff",
 	DEFAULT_LINE_WIDTH:2,
 
-	CONFIRM_TEXT_CLEARLINES:"すべての線を消去しますか？",
-	CONFIRM_TEXT_CLEARIMAGE:"背景画像を消去しますか？",
+	CONFIRM_TEXT_CLEARLINES:"すべての線と文字を消去する？",
+	CONFIRM_TEXT_CLEARIMAGE:"背景画像を消去する？",
 	
 	m_canvasMgr:null,
 	m_resizeTimer:null,
@@ -31,6 +31,7 @@ ChatManager.prototype = {
 	m_coverLock:false,
 	m_textCover:null,
 	m_textCoverBG:null,
+	m_textCoverBG2:null,
 	m_textCoverInputArea:null,
 	m_textInput:null,
 	m_textX:0,
@@ -101,6 +102,7 @@ ChatManager.prototype = {
 		$("#textBtn").click(function(){_this.onTextBtnClicked();});
 		this.m_textCover = $("#textCover");
 		this.m_textCoverBG = $("#textCover .textCoverBG").click(function(){_this.onTextCoverBGClicked()});
+		this.m_textCoverBG2 = $("#textCover .textCoverBG2");
 		this.m_textCoverInputArea = $("#textCover .textInputArea").hide();
 		this.m_textInput = $("#textInput").keydown(function(){_this.onTextInputKeyDown();});
 		$("#textOKBtn").click(function(){_this.onTextOKBtnClicked();});
@@ -122,6 +124,9 @@ ChatManager.prototype = {
 		this.updateLinePreview();
 		this.updateUserLinePreview();
 		this.m_cover.css("line-height", $("#wrap").height()+"px");
+
+		var controlWidth = $("#control").width();
+		this.m_textCoverBG2.css("width", Math.max($("#wrap").width()-height, controlWidth) + "px");
 	},
 
 	updateLinePreview:function(){
@@ -389,13 +394,14 @@ ChatManager.prototype = {
 			},
 			success:function(data){
 				if (callback){
-					callback();
+					callback(data);
 				}
 			}
 		});
 	},
 
 	onColorChanged:function(color){
+		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
 		this.m_lineColor = color;
 		dbg(color);
 		if (this.m_canvasMgr){
@@ -451,7 +457,9 @@ ChatManager.prototype = {
 		$("#undo").attr("disabled","1");
 		var _this = this;
 		this.m_sendEvents.push({action:"lineclear", obj: null});
+		this.m_coverLock = true;
 		this.sendEvents(function(data){
+			_this.m_coverLock = false;
 			if (_this.m_hideCoverTimer){
 				clearTimeout(_this.m_hideCoverTimer);
 			}
@@ -544,8 +552,11 @@ ChatManager.prototype = {
 	},
 
 	onTextBtnClicked:function(){
+		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
 		this.m_textCover.removeClass("hidden");
-		this.m_textCoverInputArea.hide()
+		this.m_textCoverInputArea.hide();
+		$(".textHowTo", this.m_textCover).addClass("slidein");
+		$("#textCancelBtn").addClass("slidein");
 	},
 	
 	onTextCoverBGClicked:function(){
@@ -561,7 +572,9 @@ ChatManager.prototype = {
 	onTextOKBtnClicked:function(){
 		this.inputText();
 		this.m_textCover.addClass("hidden");
-		this.m_textInput.val("")
+		this.m_textInput.val("");
+		$(".textHowTo", this.m_textCover).removeClass("slidein");
+		$("#textCancelBtn").removeClass("slidein");
 	},
 
 	inputText:function(){
@@ -577,6 +590,8 @@ ChatManager.prototype = {
 
 	onTextCancelBtnClicked:function(){
 		this.m_textCover.addClass("hidden");
+		$(".textHowTo", this.m_textCover).removeClass("slidein");
+		$("#textCancelBtn").removeClass("slidein");
 	},
 
 	onTextInputKeyDown:function(){

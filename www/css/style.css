@@ -108,7 +108,7 @@ body > #body {
 */
 }
 
-.slidein#control{
+.slidein{
    animation-name            	: slidein-from-right;
 	-webkit-animation-name    	: slidein-from-right;
     -moz-animation-name    		: slidein-from-right;
@@ -185,18 +185,13 @@ body > #body {
 
 .title.animate#cover .logo{
 	opacity:1.0;
-/*	top:0px;*/
 	left:0px;
 
 }
-/*-webkit-transition: all 1s linear;*/
-
-
 
 #topArea{
 	margin:10px 5px 0px 5px;
 	padding:5px;
-/*	background-color:#fff;*/
 	border:1px solid #ccc;
 }
 
@@ -335,10 +330,21 @@ button[disabled]#textBtn:after{
 	left:0px;
 	width:100%;
 	height:100%;
-	background-color:#bbb;
-	opacity:0.6;
+	background-color:#fff;
+	opacity:0.0;
 	cursor:text;
 }
+
+#textCover .textCoverBG2{
+	position:absolute;
+	top:0px;
+	right:0px;
+	width:50%;
+	height:100%;
+	background-color:#999;
+	opacity:0.8;
+}
+
 
 #textCover .textInputArea{
 	position:absolute;
@@ -367,9 +373,9 @@ button[disabled]#textBtn:after{
 #textCover .textHowTo{
 	position:fixed;
 	width:185px;
-	height:100px;
-	right:10px;
-	margin-right:0px;
+	height:80px;
+	right:0px;
+	margin-right:10px;
 	bottom:50px;
 	font-size:19px;
 	color:#fff;
@@ -377,17 +383,22 @@ button[disabled]#textBtn:after{
 }
 
 #textCover .textHowTo:before {
-	content:"文字を入力する箇所をクリックしてください";
+	content:"文字を入力する場所をクリックする";
 }
 
 #textCancelBtn{
 	position:fixed;
 	width:185px;
-	right:10px;
-	margin-right:0px;
+	right:0px;
+	margin-right:10px;
 	bottom:10px;
 }
 
+.slidein#textCancelBtn{
+	animation-duration        	: 1.0s;
+	-webkit-animation-duration	: 1.0s;
+	-moz-animation-duration		: 1.0s;
+}
 
 #uploadArea button{
 	margin-top:5px;
