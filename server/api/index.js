@@ -1,3 +1,9 @@
+/*
+ * Chat2
+ * Copyright 2013, Kentaro Kai
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ *
+*/
 var user = require('./user');
 var event = require('./event');
 var image = require('./image');

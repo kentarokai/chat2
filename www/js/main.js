@@ -1,3 +1,11 @@
+/*
+ * Chat2
+ * Copyright 2013, Kentaro Kai
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ *
+*/
+
+/*このファイルはUTF8nで保存されています*/
 var g_mgr = null;
 
 $(function(){

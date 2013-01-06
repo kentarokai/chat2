@@ -1,3 +1,9 @@
+/*
+ * Chat2
+ * Copyright 2013, Kentaro Kai
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ *
+*/
 var connect = require('connect');
 var http = require('http');
 var path = require('path');

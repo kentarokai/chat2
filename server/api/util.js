@@ -1,3 +1,9 @@
+/*
+ * Chat2
+ * Copyright 2013, Kentaro Kai
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ *
+*/
 exports.log = function(o){
 	var s = JSON.stringify(o);
 	var now = new Date();

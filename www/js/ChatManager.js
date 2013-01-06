@@ -1,4 +1,11 @@
-//このファイルはUTF8nで保存されています
+/*
+ * Chat2
+ * Copyright 2013, Kentaro Kai
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ *
+*/
+
+/*このファイルはUTF8nで保存されています*/
 function ChatManager(){}
 ChatManager.prototype = {
 
