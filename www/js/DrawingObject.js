@@ -2,25 +2,62 @@ var DrawingObjectType = {
 	UNKNOWN:'unknown',
 	LINE:'line',
 	TEXT:'text',
-	CIRCLE:'circle'
+	CIRCLE:'circle',
+	RECT:'rect',
 };
-
 var DrawingObjectSerial = 1;
+
+function _DrawingRandomIds(){}
+_DrawingRandomIds.prototype = {
+	ids:[],
+
+	init:function(){
+		this.ids = [];
+	},
+
+	next:function(){
+		var max = 255 << 16 | 255 << 8 | 255;
+		var n = -1;
+		while(n < 0){
+			var _n = Math.floor(Math.random() * (max-1)) + 1;
+			var dup = false;
+			for(var i=0;i<this.ids.length;i++){
+				if (this.ids[i] == _n){
+					dup = true;
+					break;
+				}
+			}
+			if (!dup){
+				n = _n;
+				break;
+			}
+		}
+		this.ids.push(n);
+		return n;
+	},
+	
+	dummy:null
+};
+var DrawingRandomIds = new _DrawingRandomIds();
+DrawingRandomIds.init();
 
 function DrawingObject(){}
 DrawingObject.prototype = {
 
+	owner:"",
 	type:DrawingObjectType.UNKNOWN,
 	color:"rgba(255,0,255,1)",
 	lineWidth:2,
 	points:[],
-	id:0,
+	id:"",
 	instanceId:0,
 	smoothed:false,
 	text:"",
+	randomId:-1,
 
-	init:function(type, instanceId, color, lineWidth, text){
+	init:function(type, instanceId, owner, color, lineWidth, text){
 		this.type = type;
+		this.owner = owner;
 		this.color = color;
 		this.lineWidth = lineWidth;
 		this.points = [];
@@ -28,21 +65,26 @@ DrawingObject.prototype = {
 		this.id = instanceId + "-" + (DrawingObjectSerial++);
 		this.smoothed = false;
 		this.text = text;
+		this.randomId = DrawingRandomIds.next();
 	},
 
-	initForLine:function(instanceId,  color, lineWidth){
-		this.init(DrawingObjectType.LINE, instanceId, color, lineWidth, "");
+	initForLine:function(instanceId,  owner, color, lineWidth){
+		this.init(DrawingObjectType.LINE, instanceId, owner, color, lineWidth, "");
 	},
 
-	initForText:function(instanceId, text, color, xPc, yPc){
-		this.init(DrawingObjectType.TEXT, instanceId, color, 1, text);
+	initForText:function(instanceId, owner, text, color, xPc, yPc){
+		this.init(DrawingObjectType.TEXT, instanceId, owner, color, 1, text);
 		this.addPoint(xPc, yPc);
 	},
 
-	initForCircle:function(instanceId,  color, lineWidth){
-		this.init(DrawingObjectType.CIRCLE, instanceId, color, lineWidth, "");
+	initForCircle:function(instanceId,  owner, color, lineWidth){
+		this.init(DrawingObjectType.CIRCLE, instanceId, owner, color, lineWidth, "");
 	},
 
+	initForRect:function(instanceId,  owner, color, lineWidth){
+		this.init(DrawingObjectType.RECT, instanceId, owner, color, lineWidth, "");
+	},
+	
 	initWithJSONString:function(str){
 		if (!('JSON' in window)){
 			return;
@@ -54,8 +96,10 @@ DrawingObject.prototype = {
 		this.color = obj.color;
 		this.lineWidth = obj.lineWidth;
 		this.points = obj.points;
-		this.text = obj.text;
 		this.smoothed = true;
+		this.text = obj.text;
+		this.owner = obj.owner;
+		this.randomId = DrawingRandomIds.next();
 	},
 	
 	addPoint:function(xPc, yPc){
@@ -109,6 +153,7 @@ DrawingObject.prototype = {
 		var obj = {
 			id : this.id,
 			type: this.type,
+			owner: this.owner,
 			lineWidth: this.lineWidth,
 			color : this.color,
 			points : this.points,
@@ -120,6 +165,13 @@ DrawingObject.prototype = {
 		return "";
 	},
 
+	getInstanceId:function(){
+		return (this.id.split("-"))[0];
+	},
+
+	getSerial:function(){
+		return (this.id.split("-"))[1];
+	},
 	
 	dummy:null
 }

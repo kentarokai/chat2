@@ -197,14 +197,16 @@ body > #body {
 
 #undo,
 #textBtn,
-#circleBtn
+#circleBtn,
+#rectBtn
 {
 	width:40px;
 }
 
 #undo:after,
 #textBtn:after,
-#circleBtn:after{
+#circleBtn:after,
+#rectBtn:after{
 	content:" ";
 	display:block;
 	width:100%;
@@ -321,6 +323,14 @@ button[disabled]#circleBtn:after{
 	background-image:url(../img/icon-circle-disabled.svgz);
 }
 
+#rectBtn:after{
+	background-image:url(../img/icon-rect.svgz);
+}
+
+button[disabled]#rectBtn:after{
+	background-image:url(../img/icon-rect-disabled.svgz);
+}
+
 #toolCover{
 	position:absolute;
 	top:0px;
@@ -402,11 +412,15 @@ button[disabled]#circleBtn:after{
 }
 
 .text#toolCover .toolHowTo:before {
-	content:"文字を入力する場所をクリックする";
+	content:"文字を入力する場所をクリック";
 }
 
 .circle#toolCover .toolHowTo:before {
-	content:"円の中心からドラッグする(Shiftで正円)";
+	content:"円の中心からドラッグ(Shiftで正円)";
+}
+
+.rect#toolCover .toolHowTo:before {
+	content:"四角形の左上からドラッグ(Shiftで正方形)";
 }
 
 #toolCancelBtn{

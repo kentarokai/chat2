@@ -2,7 +2,9 @@
 
 CanvasManagerMode = {
 	DEFAULT:1,
-	CIRCLE:2
+	DRAWCIRCLE:2,
+	DRAWRECT:3,
+	SELECT:4
 }
 
 function CanvasManager(){}
@@ -13,8 +15,12 @@ CanvasManager.prototype = {
 	CTRL_DRAG_ANGLE_STEP:45,
 	CIRCLE_BEZIER_CONST:0.5522847,
 	m_instanceId:"",
+	m_myName:"",
 	m_mode:CanvasManagerMode.DEFAULT,
 	m_step:3,
+	m_drawer:null,
+	m_mapDrawer:null,
+	m_selectionDrawer:null,
 	m_wrap:null,
 	m_elm:null,
 	m_bg:null,
@@ -32,6 +38,8 @@ CanvasManager.prototype = {
 	m_color:"rgba(255,0,255,1)",
 	m_lineWidth:2,
 	m_currentObj:null,
+	m_mapCanvas:null,
+	m_mapContext:null,
 	
 	init:function(instanceId, $wrap, $elm, $bg){
 		var _this = this;
@@ -43,6 +51,10 @@ CanvasManager.prototype = {
 		this.m_context = this.m_elm[0].getContext('2d');
 		this.m_bgContext = this.m_bg[0].getContext('2d');
 
+		this.m_mapCanvas = $("<canvas/>");
+/*		this.m_mapCanvas.insertBefore(this.m_bg);*/
+		this.m_mapContext = this.m_mapCanvas[0].getContext('2d');
+		
 		if ($("body").hasClass("touch")){
 			this.m_elm.bind("touchstart", function(e){_this.onTouchStart(e);});
 			this.m_elm.bind("touchmove", function(e){_this.onTouchMove(e);});
@@ -56,6 +68,10 @@ CanvasManager.prototype = {
 		}
 
 		this.m_bgObjects = [];
+	},
+
+	setName:function(name){
+		this.m_myName = name;
 	},
 
 	setMode:function(mode){
@@ -72,7 +88,15 @@ CanvasManager.prototype = {
 		this.m_elm.attr({height:this.m_height});
 		this.m_bg.attr({width:this.m_width});
 		this.m_bg.attr({height:this.m_height});
-
+		if (this.m_mapCanvas){
+			this.m_mapCanvas.attr({width:this.m_width});
+			this.m_mapCanvas.attr({height:this.m_height});
+			this.m_mapCanvas.css({
+				position:"absolute",
+				top:"0px",
+				left:this.m_width + "px"
+				});
+		}
 		this.redrawBG();
 	},
 
@@ -102,11 +126,14 @@ CanvasManager.prototype = {
 	},
 	
 	redrawBG:function(){
-		dbg(this.m_bgObjects);
 		this.m_bgContext.clearRect(0, 0, this.m_width, this.m_height);
+		if (this.m_mapContext){
+			this.m_mapContext.clearRect(0, 0, this.m_width, this.m_height);
+		}
 		for(var i=0;i<this.m_bgObjects.length;i++){
 			var obj = this.m_bgObjects[i];
 			this.draw(obj, this.m_bgContext);
+			this.drawMap(obj);
 		}
 	},
 
@@ -183,8 +210,13 @@ CanvasManager.prototype = {
 		this.m_bgObjects = [];
 		this.m_context.clearRect(0, 0, this.m_width, this.m_height);
 		this.m_bgContext.clearRect(0, 0, this.m_width, this.m_height);
+		if (this.m_mapContext){
+			this.m_mapContext.clearRect(0, 0, this.m_width, this.m_height);
+		}
 		this.m_isDragging = false;
 		this.m_currentObj = null;
+
+		DrawingRandomIds.init();
 	},
 
 	addObject:function(obj){
@@ -195,6 +227,7 @@ CanvasManager.prototype = {
 		}
 		this.m_bgObjects.push(obj);
 		this.draw(obj, this.m_bgContext);
+		this.drawMap(obj);
 	},
 
 	deleteObjects:function(objectIds){
@@ -217,12 +250,14 @@ CanvasManager.prototype = {
 	addText:function(text, xPx, yPx){
 		var obj = new DrawingObject();
 		obj.initForText(this.m_instanceId,
+						this.m_myName,
 						text,
 						this.m_color,
 						this._myRound(xPx / this.m_width),
 						this._myRound(yPx / this.m_height));
 		this.addObject(obj);
 		this.draw(obj, this.m_bgContext);
+//		this.drawMap(obj);
 
 		return obj;
 	},
@@ -230,20 +265,28 @@ CanvasManager.prototype = {
 	onMouseDown:function(e){
 		e.stopPropagation();
 		e.preventDefault();
-		if (!this.m_isDragging){
-			this.m_isDragging = true;
+		if (CanvasManagerMode.SELECT == this.m_mode){
 
-			var offset = this.m_elm.offset();
-			this.m_mouseX = e.clientX - offset.left;
-			this.m_mouseY = e.clientY - offset.top;
-			this.onStartDragging();
+		}else{
+			if (!this.m_isDragging){
+				this.m_isDragging = true;
+	
+				var offset = this.m_elm.offset();
+				this.m_mouseX = e.clientX - offset.left;
+				this.m_mouseY = e.clientY - offset.top;
+				this.onStartDragging();
+			}
 		}
 	},
 	onMouseUp:function(e){
 		e.stopPropagation();
-		if (this.m_isDragging){
-			this.m_isDragging = false;
-			this.onStopDragging();
+		if (CanvasManagerMode.SELECT == this.m_mode){
+
+		}else{
+			if (this.m_isDragging){
+				this.m_isDragging = false;
+				this.onStopDragging();
+			}
 		}
 	},
 	onMouseOver:function(e){
@@ -253,22 +296,59 @@ CanvasManager.prototype = {
 	onMouseOut:function(e){
 		e.stopPropagation();
 		this.m_isHover = false;
-		if (this.m_isDragging){
-			this.m_isDragging = false;
-			this.onStopDragging();
+		if (CanvasManagerMode.SELECT == this.m_mode){
+
+		}else{
+			if (this.m_isDragging){
+				this.m_isDragging = false;
+				this.onStopDragging();
+			}
 		}
 	},
 	onMouseMove:function(e){
 		e.stopPropagation();
 		e.preventDefault();
-		if (!this.m_isDragging){
-			return;
+
+		if (CanvasManagerMode.SELECT == this.m_mode){
+			if (!this.m_mapContext){
+				return;
+			}
+			if (this.m_isDragging){
+				this.m_context.clearRect(0, 0, this.m_width, this.m_height);
+				return;
+			}
+			var data = this.m_mapContext.getImageData(e.clientX, e.clientY, 1, 1).data;
+			if (0 == data[0] && 0 == data[1] && 0 == data[2]){
+				this.m_context.clearRect(0, 0, this.m_width, this.m_height);
+				return;
+			}
+			var randomId = data[0] << 16 | data[1] << 8 | data[2];
+			var targetObj = null;
+
+			for (var i=0;i<this.m_bgObjects.length;i++){
+				if (this.m_bgObjects[i].randomId == randomId){
+					targetObj = this.m_bgObjects[i];
+					break;
+				}
+			}
+			if (!targetObj){
+				this.m_context.clearRect(0, 0, this.m_width, this.m_height);
+				return;
+			}
+			this.drawSelection(targetObj);
+//			dbg(targetObj.owner);
+
+		}else{
+			if (!this.m_isDragging){
+				return;
+			}
+			
+			var offset = this.m_elm.offset();
+			this.m_mouseX = e.clientX - offset.left;
+			this.m_mouseY = e.clientY - offset.top;
+			this.onDrag();
 		}
 		
-		var offset = this.m_elm.offset();
-		this.m_mouseX = e.clientX - offset.left;
-		this.m_mouseY = e.clientY - offset.top;
-		this.onDrag();
 	},
 
 	onTouchStart:function(e){
@@ -323,10 +403,12 @@ CanvasManager.prototype = {
 	
 	onStartDragging:function(){
 		this.m_currentObj = new DrawingObject();
-		if (CanvasManagerMode.CIRCLE == this.m_mode){
-			this.m_currentObj.initForCircle(this.m_instanceId, this.m_color, this.m_lineWidth);
+		if (CanvasManagerMode.DRAWRECT == this.m_mode){
+			this.m_currentObj.initForRect(this.m_instanceId, this.m_myName, this.m_color, this.m_lineWidth);
+		}else if (CanvasManagerMode.DRAWCIRCLE == this.m_mode){
+			this.m_currentObj.initForCircle(this.m_instanceId, this.m_myName, this.m_color, this.m_lineWidth);
 		}else{
-			this.m_currentObj.initForLine(this.m_instanceId, this.m_color, this.m_lineWidth);
+			this.m_currentObj.initForLine(this.m_instanceId, this.m_myName, this.m_color, this.m_lineWidth);
 		}
 		this.addCurrentPoint();
 	},
@@ -338,6 +420,8 @@ CanvasManager.prototype = {
 		if (!this.m_currentObj.hasLength()){
 			return;
 		}
+		this.drawMap(this.m_currentObj);
+		
 		this.m_bgObjects.push(this.m_currentObj);
 		this.m_elm.trigger("objectAdded", this.m_currentObj);
 		var json = this.m_currentObj.toJSONString();
@@ -346,7 +430,33 @@ CanvasManager.prototype = {
 	},
 
 	onDrag:function(){
-		if (CanvasManagerMode.CIRCLE == this.m_mode){
+		if (CanvasManagerMode.DRAWRECT == this.m_mode){
+			if ('event' in window
+				&& window.event
+				&& window.event.shiftKey
+				&& this.m_currentObj
+				&& 0 < this.m_currentObj.points.length){
+				
+				var first = this.m_currentObj.points[0];
+				var now = {	x: this.m_mouseX / this.m_width,
+							y: this.m_mouseY / this.m_height};
+				var dX = Math.abs(first.x - now.x);
+				var dY = Math.abs(first.y - now.y);
+				var dMax = Math.max(dX, dY);
+				
+				this.m_currentObj.addLastPoint(
+					this._myRound(first.x < now.x ? (first.x + dMax) : (first.x - dMax)),
+					this._myRound(first.y < now.y ? (first.y + dMax) : (first.y - dMax))
+					);
+					
+			}else{
+				this.m_currentObj.addLastPoint(
+						this._myRound(this.m_mouseX / this.m_width),
+						this._myRound(this.m_mouseY / this.m_height)
+						);
+			}
+
+		} else if (CanvasManagerMode.DRAWCIRCLE == this.m_mode){
 			if ('event' in window
 				&& window.event
 				&& window.event.shiftKey
@@ -431,108 +541,36 @@ CanvasManager.prototype = {
 		return Math.round(n * 10000) / 10000;
 	},
 
-	_pc2px:function(pc){
-		return {
-			x: pc.x * this.m_width,
-			y: pc.y * this.m_height
-		};
-	},
-
 	draw:function(obj, ctx){
-		if (DrawingObjectType.LINE == obj.type){
-			this.drawLine(obj, ctx);
-		}else if (DrawingObjectType.TEXT == obj.type){
-			this.drawText(obj, ctx);
-		}else if (DrawingObjectType.CIRCLE == obj.type){
-			this.drawCircle(obj, ctx);
+		if (!this.m_drawer){
+			this.m_drawer = new CanvasDrawer();
+			this.m_drawer.init(this.BASE_SIZE, this.m_step);
 		}
+
+		this.m_drawer.draw(obj, ctx);
 	},
 
-	drawText:function(obj, ctx){
-		if (!obj.points.length){
+	drawMap:function(obj){
+		if (!this.m_mapContext){
 			return;
 		}
-		var first = obj.points[0];
-		var pos = this._pc2px(first);
-		var fontsize = 14 * this.m_height / this.BASE_SIZE;
-		ctx.fillStyle = obj.color;;
-		ctx.font = fontsize + "px sans-serif";
-		ctx.fillText(obj.text, pos.x, pos.y);  
-	},
-	
-	drawLine:function(obj, ctx){
 		
-		var step = obj.smoothed ? 1 : this.m_step;
-		var points = obj.points;
-		
-		var pointCount = points.length;
-		if (!pointCount){
-			return;
+		if (!this.m_mapDrawer){
+			this.m_mapDrawer = new CanvasDrawer();
+			this.m_mapDrawer.init(this.BASE_SIZE, this.m_step);
+			this.m_mapDrawer.isMapMode = true;
 		}
-		ctx.beginPath();
-		var lastPoint = this._pc2px(points[0]);
-		ctx.moveTo(lastPoint.x, lastPoint.y);
-
-		var mX, mY, point;
-		if (1 < pointCount){
-			point = this._pc2px(points[1]);
-			mX = (point.x + lastPoint.x) / 2.0;
-			mY = (point.y + lastPoint.y) / 2.0;
-		    ctx.lineTo(mX, mY);
-			lastPoint = point;
-		}
-		for(i=2;i<pointCount;i+=step){
-			point = this._pc2px(points[i]);
-			mX = (point.x + lastPoint.x) / 2.0;
-			mY = (point.y + lastPoint.y) / 2.0;
-			ctx.quadraticCurveTo(lastPoint.x,
-											lastPoint.y,
-											mX,
-											mY);
-			lastPoint = point;
-		}
-		point = this._pc2px(points[pointCount-1]);
-		ctx.lineTo(point.x, point.y);
-
-		ctx.lineWidth = obj.lineWidth * this.m_height / this.BASE_SIZE;
-		ctx.strokeStyle = obj.color;
-		ctx.lineCap = "round";
-		ctx.stroke();
+		this.m_mapDrawer.draw(obj, this.m_mapContext);
 	},
 
-	drawCircle:function(obj, ctx){
-		if (!obj.points.length){
-			return;
+	drawSelection:function(obj){
+		if (!this.m_selectionDrawer){
+			this.m_selectionDrawer = new CanvasDrawer();
+			this.m_selectionDrawer.init(this.BASE_SIZE, this.m_step);
+			this.m_selectionDrawer.isSelectionMode = true;
 		}
-		ctx.beginPath();
-
-		var pc1 = obj.points[0];
-		var pos1 = this._pc2px(pc1);
-		var pc2 = obj.points[obj.points.length-1];
-		var pos2 = this._pc2px(pc2);
-		
-		var rx = Math.abs(pos1.x - pos2.x);
-		var ry = Math.abs(pos1.y - pos2.y);
-		var cx = pos1.x;
-		var cy = pos1.y;
-		ctx.moveTo(cx+rx, cy);
-		ctx.bezierCurveTo(cx+rx,	cy-ry*this.CIRCLE_BEZIER_CONST,
-						  cx+rx*this.CIRCLE_BEZIER_CONST,	cy-ry,
-						  cx,	cy-ry);
-		ctx.bezierCurveTo(cx-rx*this.CIRCLE_BEZIER_CONST,	cy-ry,
-						  cx-rx,	cy-ry*this.CIRCLE_BEZIER_CONST,
-						  cx-rx,	cy);
-		ctx.bezierCurveTo(cx-rx,	cy+ry*this.CIRCLE_BEZIER_CONST,
-						  cx-rx*this.CIRCLE_BEZIER_CONST,	cy+ry,
-						  cx,	cy+ry);
-		ctx.bezierCurveTo(cx+rx*this.CIRCLE_BEZIER_CONST,	cy+ry,
-						  cx+rx,	cy+ry*this.CIRCLE_BEZIER_CONST,
-						  cx+rx,	cy);
-
-		ctx.lineWidth = obj.lineWidth * this.m_height / this.BASE_SIZE;
-		ctx.strokeStyle = obj.color;
-		ctx.lineCap = "round";
-		ctx.stroke();
+		this.m_selectionDrawer.draw(obj, this.m_context);
+		this.draw(obj, this.m_context);
 	},
 	
 	dummy:null

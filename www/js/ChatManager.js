@@ -101,11 +101,12 @@ ChatManager.prototype = {
 
 		$("#textBtn").click(function(){_this.onTextBtnClicked();});
 		$("#circleBtn").click(function(){_this.onCircleBtnClicked();});
+		$("#rectBtn").click(function(){_this.onRectBtnClicked();});
 		this.m_toolCover = $("#toolCover");
-		this.m_toolCoverBG = $("#toolCover .toolCoverBG").click(function(){_this.onToolCoverBGClicked()});
+		this.m_toolCoverBG = $("#toolCover .toolCoverBG").click(function(e){_this.onToolCoverBGClicked(e)});
 		this.m_toolCoverBG2 = $("#toolCover .toolCoverBG2");
 		this.m_toolCoverInputArea = $("#toolCover .textInputArea").hide();
-		this.m_textInput = $("#textInput").keydown(function(){_this.onTextInputKeyDown();});
+		this.m_textInput = $("#textInput").keydown(function(e){_this.onTextInputKeyDown(e);});
 		$("#textOKBtn").click(function(){_this.onTextOKBtnClicked();});
 		$("#toolCancelBtn").click(function(){_this.onToolCancelBtnClicked();});
 //		$(window).keydown(function(){_this.onWindowKeyDown();});
@@ -203,6 +204,7 @@ ChatManager.prototype = {
 
 		if (data.user){
 			this.m_myName = data.user.name;
+			this.m_canvasMgr.setName(this.m_myName);
 		}
 		if (data.users){
 			var list = $("#users ul").empty();
@@ -249,7 +251,7 @@ ChatManager.prototype = {
 			}else if (0 > clearLineIndex) {
 				var obj = new DrawingObject();
 				obj.initWithJSONString(event.value);
-				obj.owner = event.userName;
+				//obj.owner = event.userName;
 	
 				if ("linedelete" == action){
 					deleteIds.push(obj.id);
@@ -405,13 +407,16 @@ ChatManager.prototype = {
 	onColorChanged:function(color){
 		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
 		this.m_lineColor = color;
-		dbg(color);
+	
 		if (this.m_canvasMgr){
 			this.m_canvasMgr.setColor(color);
 		}
 
 		if (localStorage){
-			localStorage.color = color;
+			try{
+				localStorage.color = color;
+			}catch(err){
+			}
 		}
 		var _this = this;
 		setTimeout(function(){
@@ -567,22 +572,32 @@ ChatManager.prototype = {
 		this.m_toolCoverInputArea.hide();
 		$(".toolHowTo", this.m_toolCover).addClass("slidein");
 		$("#toolCancelBtn").addClass("slidein");
-		this.m_canvasMgr.setMode(CanvasManagerMode.CIRCLE);
+		this.m_canvasMgr.setMode(CanvasManagerMode.DRAWCIRCLE);
 	},
 
+	onRectBtnClicked:function(){
+		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
+		this.m_toolCover.removeClass("hidden").addClass("rect");
+		this.m_toolCoverInputArea.hide();
+		$(".toolHowTo", this.m_toolCover).addClass("slidein");
+		$("#toolCancelBtn").addClass("slidein");
+		this.m_canvasMgr.setMode(CanvasManagerMode.DRAWRECT);
+	},
+
+	
 	hideToolCover:function(){
-		this.m_toolCover.addClass("hidden").removeClass("text").removeClass("circle");
+		this.m_toolCover.addClass("hidden").removeClass("text").removeClass("circle").removeClass("rect");
 		$(".toolHowTo", this.m_toolCover).removeClass("slidein");
 		$("#toolCancelBtn").removeClass("slidein");
 		this.m_canvasMgr.setMode(CanvasManagerMode.DEFAULT);
 	},
 	
-	onToolCoverBGClicked:function(){
+	onToolCoverBGClicked:function(e){
 		if (!this.m_toolCover.hasClass("text")){
 			return;
 		}
-		this.m_textX = event.clientX;
-		this.m_textY = event.clientY - 9;
+		this.m_textX = e.clientX;
+		this.m_textY = e.clientY - 9;
 		this.m_toolCoverInputArea.show().css({
 			left: this.m_textX + "px",
 			top: this.m_textY + "px"
@@ -611,13 +626,13 @@ ChatManager.prototype = {
 		this.hideToolCover();
 	},
 
-	onTextInputKeyDown:function(){
-		if (13 == event.keyCode){
+	onTextInputKeyDown:function(e){
+		if (13 == e.keyCode){
 			this.onTextOKBtnClicked();
-		}else if (27 == event.keyCode){
+		}else if (27 == e.keyCode){
 			this.onToolCancelBtnClicked();
 		}
-		event.cancelBubble = true;
+		e.cancelBubble = true;
 	},
 
 	onWindowKeyDown:function(){
