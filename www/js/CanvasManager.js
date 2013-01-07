@@ -66,7 +66,9 @@ CanvasManager.prototype = {
 			this.m_elm.bind("touchstart", function(e){_this.onTouchStart(e);});
 			this.m_elm.bind("touchmove", function(e){_this.onTouchMove(e);});
 			this.m_elm.bind("touchend", function(e){_this.onTouchEnd(e);});
-		}else{		
+		}
+
+		if ($("body").hasClass("mouse")){
 			this.m_elm.bind("mousedown", function(e){_this.onMouseDown(e);});
 			this.m_elm.bind("mouseup", function(e){_this.onMouseUp(e);});
 			this.m_elm.bind("mouseover", function(e){_this.onMouseOver(e);});

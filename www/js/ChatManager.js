@@ -58,6 +58,9 @@ ChatManager.prototype = {
 		if(!!('ontouchstart' in window)){
 			$("body").addClass("touch");
 		}
+		if(!!('onmousedown' in window)){
+			$("body").addClass("mouse");
+		}
 		
 		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
 		this.m_userLineSettings = {};
@@ -169,6 +172,8 @@ ChatManager.prototype = {
 			data.exceptInstanceId = this.m_instanceId;
 		}
 		$.ajax({
+			cache: false,
+			/*dataType : "jsonp",*/
 			type: "GET",
 			url: "./api/event/fetch",
 			data: data,
@@ -397,11 +402,14 @@ ChatManager.prototype = {
 		dbg(events);
 		this.m_sendEvents = [];
 		$.ajax({
+			cache: false,
+			/*dataType : "jsonp",*/
 			type: "POST",
 			url: "./api/event/send",
 			data: {
 				events: eventList,
-				instanceId: this.m_instanceId
+				instanceId: this.m_instanceId,
+				requestedAt: (new Date())
 			},
 			success:function(data){
 				if (callback){

@@ -43,6 +43,7 @@ exports.getUserName = function(req){
 
 exports.buildJSONPResponse = function(req, obj)
 {
+	obj.acceptedAt = new Date();
 	var str = JSON.stringify(obj);
 	if ("callback" in req.query)
 	{

@@ -168,7 +168,7 @@ var _sendCore  = function(req, res, events, instanceId){
 };
 
 exports.send = function(req, res){
-
+	
 	user.heartbeatToDB(req, res, function(){
 		if (!('events' in req.body)
 			|| !req.body.events.length){

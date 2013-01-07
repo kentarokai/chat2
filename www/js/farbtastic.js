@@ -400,7 +400,8 @@ jQuery._farbtastic = function (container, callback) {
 	e.bind('touchstart', fb.touchstart);
 	e.bind('touchmove', function(e){fb.touchmove(event);});
 	e.bind('touchend', fb.touchend);
-  }else{
+  }
+  if(!!('onmousedown' in window)){
 	$('*', e).mousedown(fb.mousedown);
   }
 	
