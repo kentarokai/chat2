@@ -119,9 +119,9 @@ CanvasDrawer.prototype = {
 		var mX, mY, point;
 		if (1 < pointCount){
 			point = this._pc2px(points[1]);
-			mX = (point.x + lastPoint.x) / 2.0;
-			mY = (point.y + lastPoint.y) / 2.0;
-		    ctx.lineTo(mX, mY);
+//			mX = (point.x + lastPoint.x) / 2.0;
+//			mY = (point.y + lastPoint.y) / 2.0;
+//		    ctx.lineTo(mX, mY);
 			lastPoint = point;
 		}
 		for(i=2;i<pointCount;i+=step){

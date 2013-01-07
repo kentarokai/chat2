@@ -59,7 +59,7 @@ CanvasManager.prototype = {
 		this.m_bgContext = this.m_bg[0].getContext('2d');
 
 		this.m_mapCanvas = $("<canvas/>");
-/*		this.m_mapCanvas.insertBefore(this.m_bg);*/
+//		this.m_mapCanvas.insertBefore(this.m_bg);
 		this.m_mapContext = this.m_mapCanvas[0].getContext('2d');
 		
 		if ($("body").hasClass("touch")){
