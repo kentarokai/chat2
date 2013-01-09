@@ -4,9 +4,6 @@
  * Dual licensed under the MIT or GPL Version 2 licenses.
  *
 */
-
-/*このファイルはUTF8nで保存されています*/
-
 CanvasManagerMode = {
 	DEFAULT:1,
 	DRAWCIRCLE:2,
@@ -259,10 +256,19 @@ CanvasManager.prototype = {
 		this.m_bgObjects.push(obj);
 		this.draw(obj, this.m_bgContext);
 		this.drawMap(obj);
+
+		var key = "key" + obj.id;
+		if (key in this.m_othersInfo){
+			var _info = this.m_othersInfo[key];
+			clearTimeout(_info.timer);
+			delete this.m_othersInfo[key];
+			this.redrawOthers();
+		}
 	},
 
 	deleteObjects:function(objectIds){
 		var deleted = false;
+		var deletedOthersCanvasObject = false;
 		for(var i=0;i<objectIds.length;i++){
 			var objectId = objectIds[i];
 			for (var j=this.m_bgObjects.length-1;j>=0;j--){
@@ -272,9 +278,20 @@ CanvasManager.prototype = {
 					break;
 				}
 			}
+			
+			var key = "key" + objectId;
+			if (key in this.m_othersInfo){
+				var _info = this.m_othersInfo[key];
+				clearTimeout(_info.timer);
+				delete this.m_othersInfo[key];
+				deletedOthersCanvasObject = true;
+			}
 		}
 		if (deleted){
 			this.redrawBG();
+		}
+		if (deletedOthersCanvasObject){
+			this.redrawOthers();
 		}
 	},
 
@@ -299,7 +316,6 @@ CanvasManager.prototype = {
 		var key = "key" + obj.id;
 
 		if (key in this.m_othersInfo){
-//			dbg("clear " + key);
 			var _info = this.m_othersInfo[key];
 			clearTimeout(_info.timer);
 			delete this.m_othersInfo[key];
@@ -308,15 +324,12 @@ CanvasManager.prototype = {
 		var info = {
 			obj:obj,
 			timer:setTimeout(function(){
-//				dbg("delete " + key);
 				if (key in _this.m_othersInfo){
 					delete _this.m_othersInfo[key];
 				}
-//				dbg(_this.m_othersInfo);
 				_this.redrawOthers();
 			},5000)
 		};
-//		dbg("add " + key);
 		this.m_othersInfo[key] = info;
 		this.redrawOthers();
 	},
@@ -433,7 +446,6 @@ CanvasManager.prototype = {
 				return;
 			}
 			this.drawSelection(targetObj);
-//			dbg(targetObj.owner);
 
 		}else{
 			if (!this.m_isDragging){
@@ -463,8 +475,6 @@ CanvasManager.prototype = {
 			this.m_mouseY = touches[0].pageY - offset.top;
 			this.onStartDragging();
 		}
-		
-		$("#dbg").text(touches.length);
 	},
 
 	onTouchMove:function(e){
@@ -481,7 +491,6 @@ CanvasManager.prototype = {
 		var _this = this;
 		setTimeout(function(){
 			_this.onDrag();
-			$("#dbg").text(_this.m_mouseX);
 		},1);
 	},
 
@@ -521,19 +530,11 @@ CanvasManager.prototype = {
 		
 		this.m_bgObjects.push(this.m_currentObj);
 		this.m_elm.trigger("objectAdded", this.m_currentObj);
-		var json = this.m_currentObj.toJSONString();
-		$("#dbg").text(json);
 		this.m_currentObj = null;
 	},
 
 	onDrag:function(){
-/*
-		var _nowPc = {	x: this._myRound(this.m_mouseX / this.m_width),
-						y: this._myRound(this.m_mouseY / this.m_height)};
-		setTimeout(function(){
-			g_mgr.sendSocketUIMsgToOthers(_nowPc);
-		},1);
-*/		
+
 		if (CanvasManagerMode.DRAWRECT == this.m_mode){
 			if ('event' in window
 				&& window.event

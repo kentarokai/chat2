@@ -103,11 +103,20 @@ DrawingObject.prototype = {
 		this.type = obj.type;
 		this.color = obj.color;
 		this.lineWidth = obj.lineWidth;
-		this.points = obj.points;
 		this.smoothed = obj.smoothed;
 		this.text = obj.text;
 		this.owner = obj.owner;
 		this.randomId = DrawingRandomIds.next();
+		
+		if (obj.pointList){
+			var points = [];
+			for(var i=0;i<obj.pointList.length;i+=2){
+				points.push({x:obj.pointList[i], y:obj.pointList[i+1]});
+			}
+			this.points = points;
+		}else{
+			this.points = obj.points;
+		}
 	},
 
 	clone:function(){
@@ -174,6 +183,14 @@ DrawingObject.prototype = {
 			text: this.text,
 			smoothed: this.smoothed
 		}
+/*
+		var _points = [];
+		for(var i=0;i<this.points.length;i++){
+			_points.push(this.points[i].x);
+			_points.push(this.points[i].y);
+		}
+		obj.pointList = _points;
+*/		
 		if ('JSON' in window){
 			return JSON.stringify(obj);
 		}

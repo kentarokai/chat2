@@ -10,7 +10,8 @@
 var ChatManagerConfig = {
 	SOCKETIO_ENABLED: true,
 	SOCKETIO_DOMAIN: location.protocol + "//" + location.hostname,
-	SOCKETIO_PORT: 3000
+	SOCKETIO_PORT: 3000,
+	SOCKETIO_MININTERVAL:30
 	};
 
 (function(){
@@ -369,12 +370,9 @@ ChatManager.prototype = {
 	},
 
 	updateUserLinePreview:function(){
-		function componentToHex(c) {
-		    var hex = c.toString(16);
-		    return hex.length == 1 ? "0" + hex : hex;
-		}
-		function rgbToHex(r, g, b) {
-		    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+				
+		function rgbToHex(r,g,b){
+			return "#" + ("000000" + (r << 16 | g << 8 | b).toString(16)).slice(-6);
 		}
 
 		this.m_userLineSettings[this.m_myName] = {color:this.m_lineColor};
@@ -703,7 +701,6 @@ ChatManager.prototype = {
 	},
 
 	onSocketIOMsgReceived:function(data){		
-//		dbg(data.type);
 		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
 		if ("DrawingObject" == data.type && data.data && this.m_canvasMgr){
 			var obj = new DrawingObject();
@@ -714,7 +711,7 @@ ChatManager.prototype = {
 		}
 	},
 
-	sendSocketUIMsgToOthers:function(type, data){
+	sendSocketIOMsgToOthers:function(type, data){
 		if (!this.m_socket){
 			return;
 		}
@@ -727,13 +724,40 @@ ChatManager.prototype = {
 		this.m_socket.emit('others', obj);
 	},
 
+	m_drawingObjEventTimers:null,
+	
 	onDrawingObjectDrawing:function(obj){
 		if (!this.m_socket){
 			return;
 		}
+		if (!this.m_drawingObjEventTimers){
+			this.m_drawingObjEventTimers = {};
+		}
+
+		//this._sendSocketIODrawingObjToOthers(obj);
+		//return;
+		
+		var key = "key" + obj.id;
+		if (key in this.m_drawingObjEventTimers){
+			return;
+		}
+		var _this = this;
+		var timer = setTimeout(function(){
+				_this._sendSocketIODrawingObjToOthers(obj);
+				if (key in _this.m_drawingObjEventTimers){
+					delete _this.m_drawingObjEventTimers[key];
+				}
+		},ChatManagerConfig.SOCKETIO_MININTERVAL);
+	
+		this.m_drawingObjEventTimers[key] = timer;
+	},
+
+	_sendSocketIODrawingObjToOthers:function(obj){
 		var cloned = obj.clone();
-		cloned.smooth(3);
-		this.sendSocketUIMsgToOthers("DrawingObject", cloned.toJSONString());
+		if (!cloned.smoothed){
+			cloned.smooth(3);
+		}
+		this.sendSocketIOMsgToOthers("DrawingObject", cloned.toJSONString());
 	},
 	
 	dummy:null
