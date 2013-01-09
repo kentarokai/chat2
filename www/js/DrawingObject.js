@@ -104,10 +104,16 @@ DrawingObject.prototype = {
 		this.color = obj.color;
 		this.lineWidth = obj.lineWidth;
 		this.points = obj.points;
-		this.smoothed = true;
+		this.smoothed = obj.smoothed;
 		this.text = obj.text;
 		this.owner = obj.owner;
 		this.randomId = DrawingRandomIds.next();
+	},
+
+	clone:function(){
+		var newObj = new DrawingObject();
+		newObj.initWithJSONString(this.toJSONString());
+		return newObj;
 	},
 	
 	addPoint:function(xPc, yPc){
@@ -165,7 +171,8 @@ DrawingObject.prototype = {
 			lineWidth: this.lineWidth,
 			color : this.color,
 			points : this.points,
-			text: this.text
+			text: this.text,
+			smoothed: this.smoothed
 		}
 		if ('JSON' in window){
 			return JSON.stringify(obj);

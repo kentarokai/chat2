@@ -50,6 +50,7 @@ if (!module.parent)
 	var config = null;
 	config = require('./config');
 	var app = exports.app(config);
-	http.createServer(app).listen(config.server.port);
+	var server = http.createServer(app);
+	server.listen(config.server.port);
 }
 

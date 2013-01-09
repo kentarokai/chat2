@@ -6,6 +6,29 @@
 */
 
 /*このファイルはUTF8nで保存されています*/
+
+var ChatManagerConfig = {
+	SOCKETIO_ENABLED: true,
+	SOCKETIO_DOMAIN: location.protocol + "//" + location.hostname,
+	SOCKETIO_PORT: 3000
+	};
+
+(function(){
+/*
+	if (location.search){
+		var q = "" + location.search;
+		if (q.match(/realtime/)){
+			ChatManagerConfig.SOCKETIO_ENABLED = true;
+			window.console && window.console.log && window.console.log("== USE SocketIO ==");
+		}
+	}
+*/	
+	if (ChatManagerConfig.SOCKETIO_ENABLED){
+		var url = ChatManagerConfig.SOCKETIO_DOMAIN + ":" + ChatManagerConfig.SOCKETIO_PORT + "/socket.io/socket.io.js";
+		document.write("<script type='text/javascript' src='" + url + "'></script>");
+	}
+})();
+ 
 function ChatManager(){}
 ChatManager.prototype = {
 
@@ -16,8 +39,8 @@ ChatManager.prototype = {
 	DEFAULT_LINE_COLOR:"#0000ff",
 	DEFAULT_LINE_WIDTH:2,
 
-	CONFIRM_TEXT_CLEARLINES:"すべての線と文字を消去する？",
-	CONFIRM_TEXT_CLEARIMAGE:"背景画像を消去する？",
+	CONFIRM_TEXT_CLEARLINES:"Do you want to erase all LINEs and TEXTs?",
+	CONFIRM_TEXT_CLEARIMAGE:"Do you want to remove the background image?",
 	
 	m_canvasMgr:null,
 	m_resizeTimer:null,
@@ -43,6 +66,7 @@ ChatManager.prototype = {
 	m_textInput:null,
 	m_textX:0,
 	m_textY:0,
+	m_socket:null,
 	
 	init:function(){
 		var _this = this;
@@ -123,8 +147,29 @@ ChatManager.prototype = {
 						  
 		setTimeout(function(){_this.onResized();}, 500);
 		setTimeout(function(){_this.fetch();}, this.FETCH_FIRST);
-	},
 
+		dbg("Instance ID:" + this.m_instanceId);
+		
+		if (ChatManagerConfig.SOCKETIO_ENABLED && 'io' in window){
+
+			this.m_canvasElm.bind("objectDrawing", function(e, obj){
+				_this.onDrawingObjectDrawing(obj);
+			});
+			
+			this.m_socket = io.connect(
+		    	ChatManagerConfig.SOCKETIO_DOMAIN ,
+				{
+					port:ChatManagerConfig.SOCKETIO_PORT
+				}
+			);
+			dbg( this.m_socket );
+			this.m_socket.on('msg', function (data) {
+				_this.onSocketIOMsgReceived(data);
+//			    _this.m_socket.emit('my other event', { my: 'data $$$$$$' + _this.m_instanceId });
+			});	
+		}
+	},
+	
 	onResized:function(){
 		if (!this.m_canvasMgr){
 			return;
@@ -399,7 +444,7 @@ ChatManager.prototype = {
 		}
 		events += "]";
 
-		dbg(events);
+//		dbg(events);
 		this.m_sendEvents = [];
 		$.ajax({
 			cache: false,
@@ -635,6 +680,7 @@ ChatManager.prototype = {
 								 this.m_textX + 2,
 								 this.m_textY + 17);
 		this.onDrawingObjectAdded(obj);
+		this.onDrawingObjectDrawing(obj);
 	},
 
 	onToolCancelBtnClicked:function(){
@@ -654,6 +700,40 @@ ChatManager.prototype = {
 		if (!this.m_toolCover.hasClass("hidden")){
 			this.onToolCancelBtnClicked();
 		}
+	},
+
+	onSocketIOMsgReceived:function(data){		
+//		dbg(data.type);
+		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
+		if ("DrawingObject" == data.type && data.data && this.m_canvasMgr){
+			var obj = new DrawingObject();
+			obj.initWithJSONString(data.data);
+			this.m_canvasMgr.addOthersObject(obj);
+		}else if ("Message" == data.type){
+			dbg("SocketIO Msg Received: " + JSON.stringify(data));
+		}
+	},
+
+	sendSocketUIMsgToOthers:function(type, data){
+		if (!this.m_socket){
+			return;
+		}
+		var obj = {
+			from: this.m_myName,
+			instanceId: this.m_instanceId,
+			type: type,
+			data: data
+		};
+		this.m_socket.emit('others', obj);
+	},
+
+	onDrawingObjectDrawing:function(obj){
+		if (!this.m_socket){
+			return;
+		}
+		var cloned = obj.clone();
+		cloned.smooth(3);
+		this.sendSocketUIMsgToOthers("DrawingObject", cloned.toJSONString());
 	},
 	
 	dummy:null

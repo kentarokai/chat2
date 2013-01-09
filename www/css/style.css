@@ -94,7 +94,7 @@ body > #body {
 	position:absolute;
 	top:0px;
 	left:0px;
-	z-index:4;
+	z-index:5;
 	cursor:default;
 	font-family:sans-serif;
 }
@@ -104,7 +104,7 @@ body > #body {
 	position:fixed;
 	width:205px;
 	height:100%;
-	z-index:5;
+	z-index:10;
 	right:0px;
 	top:0px;
 	background-color:#ccc;
@@ -409,25 +409,26 @@ button[disabled]#rectBtn:after{
 #toolCover .toolHowTo{
 	position:fixed;
 	width:185px;
-	height:80px;
+	height:95px;
 	right:0px;
 	margin-right:10px;
 	bottom:50px;
-	font-size:18px;
+	font-size:17px;
 	color:#fff;
 	font-weight:bold;
+	line-height:21px;
 }
 
 .text#toolCover .toolHowTo:before {
-	content:"文字を入力する場所をクリック";
+	content:"Click the place to which you want to write a text. ";
 }
 
 .circle#toolCover .toolHowTo:before {
-	content:"円の中心からドラッグ(Shiftで正円)";
+	content:"Drag from the center of a new ellipse. (or circle with [shift])";
 }
 
 .rect#toolCover .toolHowTo:before {
-	content:"四角形の左上からドラッグ(Shiftで正方形)";
+	content:"Drag to write a new rectangle. (or square with [shift])";
 }
 
 #toolCancelBtn{

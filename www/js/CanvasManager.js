@@ -47,6 +47,11 @@ CanvasManager.prototype = {
 	m_currentObj:null,
 	m_mapCanvas:null,
 	m_mapContext:null,
+	m_othersCanvas:null,
+	m_othersContext:null,
+	m_othersInfo:null,
+	m_lastOthersDrawTime:0,
+	m_redrawOthersTimer:null,
 	
 	init:function(instanceId, $wrap, $elm, $bg){
 		var _this = this;
@@ -58,9 +63,13 @@ CanvasManager.prototype = {
 		this.m_context = this.m_elm[0].getContext('2d');
 		this.m_bgContext = this.m_bg[0].getContext('2d');
 
-		this.m_mapCanvas = $("<canvas/>");
+//		this.m_mapCanvas = $("<canvas/>");
 //		this.m_mapCanvas.insertBefore(this.m_bg);
-		this.m_mapContext = this.m_mapCanvas[0].getContext('2d');
+//		this.m_mapContext = this.m_mapCanvas[0].getContext('2d');
+
+		this.m_othersCanvas = $("<canvas/>");
+		this.m_othersCanvas.insertBefore(this.m_bg).css("z-index",4);
+		this.m_othersContext = this.m_othersCanvas[0].getContext('2d');
 		
 		if ($("body").hasClass("touch")){
 			this.m_elm.bind("touchstart", function(e){_this.onTouchStart(e);});
@@ -77,6 +86,7 @@ CanvasManager.prototype = {
 		}
 
 		this.m_bgObjects = [];
+		this.m_othersInfo = {};
 	},
 
 	setName:function(name){
@@ -104,6 +114,15 @@ CanvasManager.prototype = {
 				position:"absolute",
 				top:"0px",
 				left:this.m_width + "px"
+				});
+		}
+		if (this.m_othersCanvas){
+			this.m_othersCanvas.attr({width:this.m_width});
+			this.m_othersCanvas.attr({height:this.m_height});
+			this.m_othersCanvas.css({
+				position:"absolute",
+				top:"0px",
+				left:"0px"
 				});
 		}
 		this.redrawBG();
@@ -222,6 +241,9 @@ CanvasManager.prototype = {
 		if (this.m_mapContext){
 			this.m_mapContext.clearRect(0, 0, this.m_width, this.m_height);
 		}
+		if (this.m_othersContext){
+			this.m_othersContext.clearRect(0, 0, this.m_width, this.m_height);
+		}
 		this.m_isDragging = false;
 		this.m_currentObj = null;
 
@@ -269,6 +291,72 @@ CanvasManager.prototype = {
 //		this.drawMap(obj);
 
 		return obj;
+	},
+
+	addOthersObject:function(obj){
+		var _this = this;
+		
+		var key = "key" + obj.id;
+
+		if (key in this.m_othersInfo){
+//			dbg("clear " + key);
+			var _info = this.m_othersInfo[key];
+			clearTimeout(_info.timer);
+			delete this.m_othersInfo[key];
+		}
+		
+		var info = {
+			obj:obj,
+			timer:setTimeout(function(){
+//				dbg("delete " + key);
+				if (key in _this.m_othersInfo){
+					delete _this.m_othersInfo[key];
+				}
+//				dbg(_this.m_othersInfo);
+				_this.redrawOthers();
+			},5000)
+		};
+//		dbg("add " + key);
+		this.m_othersInfo[key] = info;
+		this.redrawOthers();
+	},
+
+	clearOthersObject:function(){
+		for(var key in this.m_othersInfo){
+			var info = this.m_othersInfo[key];
+			clearTimeout(_info.timer);
+		}
+		this.m_othersInfo = {};
+		this.m_othersContext.clearRect(0, 0, this.m_width, this.m_height);
+	},
+	
+	redrawOthers:function(){
+		var _this = this;
+		var now = (new Date()).getTime();
+		var delta = now - this.m_lastOthersDrawTime;
+		if (delta > 20){
+			this._redrawOthersCore();
+			this.m_lastOthersDrawTime = now;
+			this.m_redrawOthersTimer = null;
+			return;
+		}
+		
+		if (this.m_redrawOthersTimer){
+			clearTimeout(this.m_redrawOthersTimer);
+			this.m_redrawOthersTimer = null;
+		}
+		this.m_redrawOthersTimer = setTimeout(function(){
+			_this.redrawOthers();
+		},25);
+	},
+
+	_redrawOthersCore:function(){
+		
+		this.m_othersContext.clearRect(0, 0, this.m_width, this.m_height);
+		for(var key in this.m_othersInfo){
+			var info = this.m_othersInfo[key];
+			this.draw(info.obj, this.m_othersContext);
+		}
 	},
 	
 	onMouseDown:function(e){
@@ -439,6 +527,13 @@ CanvasManager.prototype = {
 	},
 
 	onDrag:function(){
+/*
+		var _nowPc = {	x: this._myRound(this.m_mouseX / this.m_width),
+						y: this._myRound(this.m_mouseY / this.m_height)};
+		setTimeout(function(){
+			g_mgr.sendSocketUIMsgToOthers(_nowPc);
+		},1);
+*/		
 		if (CanvasManagerMode.DRAWRECT == this.m_mode){
 			if ('event' in window
 				&& window.event
@@ -537,6 +632,8 @@ CanvasManager.prototype = {
 		}
 		this.m_context.clearRect(0, 0, this.m_width, this.m_height);
 		this.draw(this.m_currentObj, this.m_context);
+
+		this.m_elm.trigger("objectDrawing", this.m_currentObj);
 	},
 
 	addCurrentPoint:function(){
