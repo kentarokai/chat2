@@ -109,7 +109,9 @@ ChatManager.prototype = {
 		});
 
 		this.m_lineColor = this.DEFAULT_LINE_COLOR;
-		if (localStorage && 'color' in localStorage){
+		if (Modernizr.localstorage
+			&& localStorage
+			&& 'color' in localStorage){
 			this.m_lineColor = localStorage.color;
 		}
 		$("#color").farbtastic(function(color){_this.onColorChanged(color);}).setColor(this.m_lineColor);
@@ -153,8 +155,8 @@ ChatManager.prototype = {
 		dbg("Instance ID:" + this.m_instanceId);
 
 		// Drag & Drop
-		if ('ondrop' in window &&
-			window.File
+		if (Modernizr.draganddrop
+			&& window.File
 			&& window.FormData
 			&& window.XMLHttpRequest){
 			dbg("== Drag&Drop enabled ==");
@@ -194,7 +196,9 @@ ChatManager.prototype = {
 		}
 
 		// Socket.IO
-		if (ChatManagerConfig.SOCKETIO_ENABLED && 'io' in window){
+		if (Modernizr.websockets
+			&& ChatManagerConfig.SOCKETIO_ENABLED
+			&& 'io' in window){
 			this.m_canvasElm.bind("objectDrawing", function(e, obj){
 				_this.onDrawingObjectDrawing(obj);
 			});
@@ -510,7 +514,8 @@ ChatManager.prototype = {
 			this.m_canvasMgr.setColor(color);
 		}
 
-		if (localStorage){
+		if (Modernizr.localstorage
+			&& localStorage){
 			try{
 				localStorage.color = color;
 			}catch(err){
