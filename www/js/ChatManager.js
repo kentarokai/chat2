@@ -80,13 +80,6 @@ ChatManager.prototype = {
 				_this.onResized();
 			},500);
 		});
-
-		if(!!('ontouchstart' in window)){
-			$("body").addClass("touch");
-		}
-		if(!!('onmousedown' in window)){
-			$("body").addClass("mouse");
-		}
 		
 		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
 		this.m_userLineSettings = {};
@@ -635,6 +628,7 @@ ChatManager.prototype = {
 			formData.append('file', file); // Append extra data before send.
 			var xhr = new XMLHttpRequest();
 			xhr.open('POST', "./api/image/upload", true);
+			xhr.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
 			xhr.onload = function(e) {
 				if (e.target && e.target.response){
 					dbg(e.target.response);
@@ -743,6 +737,8 @@ ChatManager.prototype = {
 	},
 
 	onTextOKBtnClicked:function(){
+		var _this = this;
+		
 		this.inputText();
 		this.m_textInput.val("");
 		this.hideToolCover();

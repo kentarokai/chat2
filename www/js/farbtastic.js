@@ -223,6 +223,50 @@ jQuery._farbtastic = function (container, callback) {
     document.dragging = false;
   }
 
+	fb.onMSPointerDown = function(e){
+		// Capture mouse
+		if (!document.dragging) {
+			document.addEventListener("MSPointerUp", fb.onMSPointerUp, false);
+			document.addEventListener("MSPointerMove", fb.onMSPointerMove, false);
+			document.dragging = true;
+		}
+		e.stopPropagation();
+		e.preventDefault();
+	
+		// Check which area is being dragged
+		var pos = fb.widgetCoords(e);
+		fb.circleDrag = Math.max(Math.abs(pos.x), Math.abs(pos.y)) * 2 > fb.square;
+	
+		// Process
+		fb.onMSPointerMove(e);
+		return false;
+	}
+
+	fb.onMSPointerMove = function(e){
+		// Get coordinates relative to color picker center
+		var pos = fb.widgetCoords(e);
+		
+		// Set new HSL parameters
+		if (fb.circleDrag) {
+		  var hue = Math.atan2(pos.x, -pos.y) / 6.28;
+		  if (hue < 0) hue += 1;
+		  fb.setHSL([hue, fb.hsl[1], fb.hsl[2]]);
+		}
+		else {
+		  var sat = Math.max(0, Math.min(1, -(pos.x / fb.square) + .5));
+		  var lum = Math.max(0, Math.min(1, -(pos.y / fb.square) + .5));
+		  fb.setHSL([fb.hsl[0], sat, lum]);
+		}
+		return false;
+	}
+
+	fb.onMSPointerUp = function(e){
+	    // Uncapture mouse
+		document.removeEventListener("MSPointerUp", fb.onMSPointerUp, false);
+		document.removeEventListener("MSPointerMove", fb.onMSPointerMove, false);
+	    document.dragging = false;
+	}
+	
 	fb.touchstart = function(){
 		event.preventDefault();
 		
@@ -396,15 +440,18 @@ jQuery._farbtastic = function (container, callback) {
   // Install mousedown handler (the others are set on the document on-demand)
   //$('*', e).mousedown(fb.mousedown);
 
-  if(!!('ontouchstart' in window)){
-	e.bind('touchstart', fb.touchstart);
-	e.bind('touchmove', function(e){fb.touchmove(event);});
-	e.bind('touchend', fb.touchend);
+  if (window.navigator.msPointerEnabled){
+	  e[0].addEventListener("MSPointerDown", fb.onMSPointerDown, false);
+  }else{
+	  if(!!('ontouchstart' in window)){
+		e.bind('touchstart', fb.touchstart);
+		e.bind('touchmove', function(e){fb.touchmove(event);});
+		e.bind('touchend', fb.touchend);
+	  }
+	  if(!!('onmousedown' in window)){
+		$('*', e).mousedown(fb.mousedown);
+	  }
   }
-  if(!!('onmousedown' in window)){
-	$('*', e).mousedown(fb.mousedown);
-  }
-	
     // Init color
   fb.setColor('#000000');
 

@@ -9,6 +9,18 @@
 var g_mgr = null;
 
 $(function(){
+
+	if (window.navigator.msPointerEnabled){
+		$("body").addClass("mspointer");
+	}else{
+		if(!!('ontouchstart' in window)){
+			$("body").addClass("touch");
+		}
+		if(!!('onmousedown' in window)){
+			$("body").addClass("mouse");
+		}
+	}
+
 	g_mgr = new ChatManager();
 	g_mgr.init();
 });
