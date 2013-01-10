@@ -159,40 +159,44 @@ ChatManager.prototype = {
 			&& window.File
 			&& window.FormData
 			&& window.XMLHttpRequest){
-			dbg("== Drag&Drop enabled ==");
-			jQuery.event.props.push('dataTransfer');
-			$("html").bind("drop", function(event){
-		        event.stopPropagation();
-		        event.preventDefault(); 
-				if (event.dataTransfer
-					&& event.dataTransfer.files
-					&& event.dataTransfer.files.length){
-					var file = event.dataTransfer.files[0];
-					//dbg(file);
-					_this.m_coverLock = true;
-					_this.m_cover.fadeIn(400,function(){
-						var formData = new FormData();
-						formData.append('file', file); // Append extra data before send.
-						var xhr = new XMLHttpRequest();
-						xhr.open('POST', "./api/image/upload", true);
-						xhr.onload = function(e) {
-							if (e.target && e.target.response){
-								dbg(e.target.response);
-								_this.m_coverLock = false;
-								_this.hideCover();
-								var res = JSON.parse(e.target.response);
-								if (res && "ok" == res.stat && res.path){
-									_this.onImageUploaded(res);
-								}else{
+			var _xhrTest = new XMLHttpRequest();
+			if ('responseType' in _xhrTest){
+				dbg("== Drag&Drop enabled ==");
+				_xhrTest= null;
+				jQuery.event.props.push('dataTransfer');
+				$("html").bind("drop", function(event){
+			        event.stopPropagation();
+			        event.preventDefault(); 
+					if (event.dataTransfer
+						&& event.dataTransfer.files
+						&& event.dataTransfer.files.length){
+						var file = event.dataTransfer.files[0];
+						//dbg(file);
+						_this.m_coverLock = true;
+						_this.m_cover.fadeIn(400,function(){
+							var formData = new FormData();
+							formData.append('file', file); // Append extra data before send.
+							var xhr = new XMLHttpRequest();
+							xhr.open('POST', "./api/image/upload", true);
+							xhr.onload = function(e) {
+								if (e.target && e.target.response){
+									dbg(e.target.response);
+									_this.m_coverLock = false;
 									_this.hideCover();
+									var res = JSON.parse(e.target.response);
+									if (res && "ok" == res.stat && res.path){
+										_this.onImageUploaded(res);
+									}else{
+										_this.hideCover();
+									}
 								}
-							}
-						};
-						xhr.send(formData);
-					});
-				}
-		        
-		    }).bind("dragenter dragover", false);
+							};
+							xhr.send(formData);
+						});
+					}
+			        
+			    }).bind("dragenter dragover", false);
+			}
 		}
 
 		// Socket.IO
