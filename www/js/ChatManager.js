@@ -156,47 +156,22 @@ ChatManager.prototype = {
 
 		// Drag & Drop
 		if (Modernizr.draganddrop
-			&& window.File
-			&& window.FormData
-			&& window.XMLHttpRequest){
-			var _xhrTest = new XMLHttpRequest();
-			if ('responseType' in _xhrTest){
-				dbg("== Drag&Drop enabled ==");
-				_xhrTest= null;
-				jQuery.event.props.push('dataTransfer');
-				$("html").bind("drop", function(event){
-			        event.stopPropagation();
-			        event.preventDefault(); 
-					if (event.dataTransfer
-						&& event.dataTransfer.files
-						&& event.dataTransfer.files.length){
-						var file = event.dataTransfer.files[0];
-						//dbg(file);
-						_this.m_coverLock = true;
-						_this.m_cover.fadeIn(400,function(){
-							var formData = new FormData();
-							formData.append('file', file); // Append extra data before send.
-							var xhr = new XMLHttpRequest();
-							xhr.open('POST', "./api/image/upload", true);
-							xhr.onload = function(e) {
-								if (e.target && e.target.response){
-									dbg(e.target.response);
-									_this.m_coverLock = false;
-									_this.hideCover();
-									var res = JSON.parse(e.target.response);
-									if (res && "ok" == res.stat && res.path){
-										_this.onImageUploaded(res);
-									}else{
-										_this.hideCover();
-									}
-								}
-							};
-							xhr.send(formData);
-						});
-					}
-			        
-			    }).bind("dragenter dragover", false);
-			}
+			&& Modernizr.xhr2
+			&& window.File){
+			
+			dbg("== Drag&Drop enabled ==");
+			jQuery.event.props.push('dataTransfer');
+			$("html").bind("drop", function(event){
+				event.stopPropagation();
+				event.preventDefault(); 
+				if (event.dataTransfer
+					&& event.dataTransfer.files
+					&& event.dataTransfer.files.length){
+					var file = event.dataTransfer.files[0];
+					_this.uploadBGImageWithXHR2(file);
+				}
+			    
+			}).bind("dragenter dragover", false);
 		}
 
 		// Socket.IO
@@ -610,23 +585,78 @@ ChatManager.prototype = {
 
 	onUploadClick:function(){
 		var _this = this;
-		var file = $("#uploadFile").val();
+		var elm = $("#uploadFile");
+		var file = elm.val();
 		if (!file){
 			return;
 		}
+
+		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
+		
+		if (Modernizr.xhr2
+			&& window.File
+			&& elm[0].files
+			&& elm[0].files.length){
+			var file = elm[0].files[0];
+			this.uploadBGImageWithXHR2(file);
+		}else{
+			dbg("Upload file with jQuery.upload");
+			
+			this.m_coverLock = true;
+			this.m_cover.fadeIn(400,function(){
+				dbg('start uploading');
+		        $('#uploadFields').upload('./api/image/upload', function(res) {
+					dbg(res);
+					_this.m_coverLock = false;
+					_this.hideCover();
+					if (res && "ok" == res.stat && res.path){
+						_this.onImageUploaded(res);
+					}else{
+						_this.hideCover();
+					}
+		        }, 'json');
+			});
+		}
+	},
+
+	uploadBGImageWithXHR2:function(file){
+		if (!file || !Modernizr.xhr2 || !window.File){
+			return;
+		}
+
+		dbg("Upload file with XHR2");
+		dbg(file);
+		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
+		
+		var _this = this;
 		this.m_coverLock = true;
 		this.m_cover.fadeIn(400,function(){
-			dbg('start uploading');
-	        $('#uploadFields').upload('./api/image/upload', function(res) {
-				dbg(res);
-				_this.m_coverLock = false;
-				_this.hideCover();
-				if (res && "ok" == res.stat && res.path){
-					_this.onImageUploaded(res);
-				}else{
+			var formData = new FormData();
+			formData.append('file', file); // Append extra data before send.
+			var xhr = new XMLHttpRequest();
+			xhr.open('POST', "./api/image/upload", true);
+			xhr.onload = function(e) {
+				if (e.target && e.target.response){
+					dbg(e.target.response);
+					_this.m_coverLock = false;
 					_this.hideCover();
+					var res = JSON.parse(e.target.response);
+					if (res && "ok" == res.stat && res.path){
+						_this.onImageUploaded(res);
+					}else{
+						_this.hideCover();
+					}
 				}
-	        }, 'json');
+			};
+			if (xhr.upload && 'onprogress' in xhr.upload){
+				xhr.upload.onprogress = function(e) {
+					if (e.lengthComputable) {
+						var progress =  (e.loaded / e.total) * 100;
+						dbg("Uploading: " + progress + "%");
+					}
+				};
+			}
+			xhr.send(formData);
 		});
 	},
 

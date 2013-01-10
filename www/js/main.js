@@ -14,7 +14,7 @@ $(function(){
 });
 
 function dbg(o){
-	('console' in window) && console.log(o);
+	window.console && window.console.log && window.console.log(o);
 }
 
 
