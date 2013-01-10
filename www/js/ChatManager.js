@@ -34,7 +34,7 @@ function ChatManager(){}
 ChatManager.prototype = {
 
 	FETCH_RETRY:300,
-	FETCH_DEFAULT_INTERVAL:2000,
+	FETCH_DEFAULT_INTERVAL:3000,
 	FETCH_MAX_INTERVAL:20000,
 	FETCH_FIRST:2000,
 	DEFAULT_LINE_COLOR:"#0000ff",
@@ -68,6 +68,7 @@ ChatManager.prototype = {
 	m_textX:0,
 	m_textY:0,
 	m_socket:null,
+	m_socketConnected:false,
 	
 	init:function(){
 		var _this = this;
@@ -150,13 +151,54 @@ ChatManager.prototype = {
 		setTimeout(function(){_this.fetch();}, this.FETCH_FIRST);
 
 		dbg("Instance ID:" + this.m_instanceId);
-		
-		if (ChatManagerConfig.SOCKETIO_ENABLED && 'io' in window){
 
+		// Drag & Drop
+		if ('ondrop' in window &&
+			window.File
+			&& window.FormData
+			&& window.XMLHttpRequest){
+			dbg("== Drag&Drop enabled ==");
+			jQuery.event.props.push('dataTransfer');
+			$("html").bind("drop", function(event){
+		        event.stopPropagation();
+		        event.preventDefault(); 
+				if (event.dataTransfer
+					&& event.dataTransfer.files
+					&& event.dataTransfer.files.length){
+					var file = event.dataTransfer.files[0];
+					//dbg(file);
+					_this.m_coverLock = true;
+					_this.m_cover.fadeIn(400,function(){
+						var formData = new FormData();
+						formData.append('file', file); // Append extra data before send.
+						var xhr = new XMLHttpRequest();
+						xhr.open('POST', "./api/image/upload", true);
+						xhr.onload = function(e) {
+							if (e.target && e.target.response){
+								dbg(e.target.response);
+								_this.m_coverLock = false;
+								_this.hideCover();
+								var res = JSON.parse(e.target.response);
+								if (res && "ok" == res.stat && res.path){
+									_this.onImageUploaded(res);
+								}else{
+									_this.hideCover();
+								}
+							}
+						};
+						xhr.send(formData);
+					});
+				}
+		        
+		    }).bind("dragenter dragover", false);
+		}
+
+		// Socket.IO
+		if (ChatManagerConfig.SOCKETIO_ENABLED && 'io' in window){
 			this.m_canvasElm.bind("objectDrawing", function(e, obj){
 				_this.onDrawingObjectDrawing(obj);
 			});
-			
+
 			this.m_socket = io.connect(
 		    	ChatManagerConfig.SOCKETIO_DOMAIN ,
 				{
@@ -166,7 +208,6 @@ ChatManager.prototype = {
 			dbg( this.m_socket );
 			this.m_socket.on('msg', function (data) {
 				_this.onSocketIOMsgReceived(data);
-//			    _this.m_socket.emit('my other event', { my: 'data $$$$$$' + _this.m_instanceId });
 			});	
 		}
 	},
@@ -202,7 +243,6 @@ ChatManager.prototype = {
 	},
 
 	fetch:function(){
-//		dbg(this.m_fetchInterval);
 			
 		var _this = this;
 		if (this.m_inFetchRequest || this.m_preventFetch){
@@ -700,7 +740,13 @@ ChatManager.prototype = {
 		}
 	},
 
-	onSocketIOMsgReceived:function(data){		
+	onSocketIOMsgReceived:function(data){
+
+		if (!this.m_socketConnected){
+			this.m_socketConnected = true;
+			dbg("== Socket.IO connected ==");
+		}
+		
 		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
 		if ("DrawingObject" == data.type && data.data && this.m_canvasMgr){
 			var obj = new DrawingObject();
@@ -712,7 +758,7 @@ ChatManager.prototype = {
 	},
 
 	sendSocketIOMsgToOthers:function(type, data){
-		if (!this.m_socket){
+		if (!this.m_socket || !this.m_socketConnected){
 			return;
 		}
 		var obj = {
@@ -727,7 +773,7 @@ ChatManager.prototype = {
 	m_drawingObjEventTimers:null,
 	
 	onDrawingObjectDrawing:function(obj){
-		if (!this.m_socket){
+		if (!this.m_socket || !this.m_socketConnected){
 			return;
 		}
 		if (!this.m_drawingObjEventTimers){
