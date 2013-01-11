@@ -101,38 +101,70 @@ CanvasManager.prototype = {
 	},
 
 	onResized:function(){
-		this.m_height = this.m_wrap.height();
-		this.m_width = this.m_height;
-		
-		dbg("canvas resized: height:" + this.m_height);
-		
-		this.m_elm.attr({width:this.m_width});
-		this.m_elm.attr({height:this.m_height});
-		this.m_bg.attr({width:this.m_width});
-		this.m_bg.attr({height:this.m_height});
-		if (this.m_mapCanvas){
-			this.m_mapCanvas.attr({width:this.m_width});
-			this.m_mapCanvas.attr({height:this.m_height});
-			this.m_mapCanvas.css({
-				position:"absolute",
-				top:"0px",
-				left:this.m_width + "px"
-				});
-		}
-		if (this.m_othersCanvas){
-			this.m_othersCanvas.attr({width:this.m_width});
-			this.m_othersCanvas.attr({height:this.m_height});
-			this.m_othersCanvas.css({
-				position:"absolute",
-				top:"0px",
-				left:"0px"
-				});
+		if ($("body").hasClass("iphone")){
+			this.m_width = this.m_wrap.width();
+			this.m_height = this.m_width;
+			
+			this.m_elm.attr({width:this.m_width});
+			this.m_elm.attr({height:this.m_height});
+			this.m_bg.attr({width:this.m_width});
+			this.m_bg.attr({height:this.m_height});
+			if (this.m_mapCanvas){
+				this.m_mapCanvas.attr({width:this.m_width});
+				this.m_mapCanvas.attr({height:this.m_height});
+				this.m_mapCanvas.css({
+					position:"absolute",
+					top:"0px",
+					left:"0px"
+					});
+			}
+			if (this.m_othersCanvas){
+				this.m_othersCanvas.attr({width:this.m_width});
+				this.m_othersCanvas.attr({height:this.m_height});
+				this.m_othersCanvas.css({
+					position:"absolute",
+					top:"0px",
+					left:"0px"
+					});
+			}
+		}else{
+			this.m_height = this.m_wrap.height();
+			this.m_width = this.m_height;
+			
+			dbg("canvas resized: height:" + this.m_height);
+			
+			this.m_elm.attr({width:this.m_width});
+			this.m_elm.attr({height:this.m_height});
+			this.m_bg.attr({width:this.m_width});
+			this.m_bg.attr({height:this.m_height});
+			if (this.m_mapCanvas){
+				this.m_mapCanvas.attr({width:this.m_width});
+				this.m_mapCanvas.attr({height:this.m_height});
+				this.m_mapCanvas.css({
+					position:"absolute",
+					top:"0px",
+					left:this.m_width + "px"
+					});
+			}
+			if (this.m_othersCanvas){
+				this.m_othersCanvas.attr({width:this.m_width});
+				this.m_othersCanvas.attr({height:this.m_height});
+				this.m_othersCanvas.css({
+					position:"absolute",
+					top:"0px",
+					left:"0px"
+					});
+			}
 		}
 		this.redrawBG();
 	},
 
 	getHeight:function(){
 		return this.m_height;
+	},
+
+	getWidth:function(){
+		return this.m_width;
 	},
 
 	setColor:function(str){

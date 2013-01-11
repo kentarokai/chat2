@@ -12,7 +12,12 @@ var ChatManagerConfig = {
 	SOCKETIO_DOMAIN: location.protocol + "//" + location.hostname,
 	SOCKETIO_PORT: 3000,
 	SOCKETIO_MININTERVAL:30
-	};
+};
+
+var ChatManagerDevice = {
+	UNKNOWN:"unknown",
+	IPHONE:"iphone"
+};
 
 (function(){
 /*
@@ -69,6 +74,9 @@ ChatManager.prototype = {
 	m_textY:0,
 	m_socket:null,
 	m_socketConnected:false,
+	m_spControlBtn:null,
+	m_control:null,
+	m_device:ChatManagerDevice.UNKNOWN,
 	
 	init:function(){
 		var _this = this;
@@ -83,7 +91,12 @@ ChatManager.prototype = {
 		
 		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
 		this.m_userLineSettings = {};
+
+		if ($("body").hasClass("iphone")){
+			this.m_device = ChatManagerDevice.IPHONE;
+		}
 		
+		this.m_control = $("#control");
 		this.m_cover = $("#cover");
 		this.m_instanceId = "" + Math.ceil(Math.random() * 10000);
 		this.m_sendEvents = [];
@@ -147,6 +160,13 @@ ChatManager.prototype = {
 
 		dbg("Instance ID:" + this.m_instanceId);
 
+		//iPhone
+		if(ChatManagerDevice.IPHONE == this.m_device){
+			this.m_spControlBtn	= $("#spControlBtn");
+			this.m_spControlBtn.click(function(e){_this.onSpControlBtnClick();});
+				
+		}
+		
 		// Drag & Drop
 		if (Modernizr.draganddrop
 			&& Modernizr.xhr2
@@ -193,15 +213,30 @@ ChatManager.prototype = {
 			return;
 		}
 		this.m_canvasMgr.onResized();
-		var height = this.m_canvasMgr.getHeight();
-		$("#bg").css({width:height, height:height}).removeClass("hidden");;
-		$("#bgImg").css({width:height, height:height});
-		this.updateLinePreview();
-		this.updateUserLinePreview();
-		this.m_cover.css("line-height", $("#wrap").height()+"px");
+		if (ChatManagerDevice.IPHONE == this.m_device){
+			var width = this.m_canvasMgr.getWidth();
+			$("#bg").css({width:width, height:width}).removeClass("hidden");
+			$("#bgImg").css({width:width, height:width});
+			this.updateLinePreview();
+			this.updateUserLinePreview();
+			this.m_cover.css("line-height", $("#wrap").height()+"px");
 
-		var controlWidth = $("#control").width();
-		this.m_toolCoverBG2.css("width", Math.max($("#wrap").width()-height, controlWidth) + "px");
+			this.m_spControlBtn.css("height",
+									(Math.max($("#wrap").height()-width-1) + "px"));
+//			var controlHeight = this.m_control.height();
+//			this.m_toolCoverBG2.css("height", Math.max($("#wrap").height()-width, controlHeight) + "px");
+
+		}else{
+			var height = this.m_canvasMgr.getHeight();
+			$("#bg").css({width:height, height:height}).removeClass("hidden");;
+			$("#bgImg").css({width:height, height:height});
+			this.updateLinePreview();
+			this.updateUserLinePreview();
+			this.m_cover.css("line-height", $("#wrap").height()+"px");
+	
+			var controlWidth = this.m_control.width();
+			this.m_toolCoverBG2.css("width", Math.max($("#wrap").width()-height, controlWidth) + "px");
+		}
 	},
 
 	updateLinePreview:function(){
@@ -212,7 +247,7 @@ ChatManager.prototype = {
 		var $elm = $(".bar", $parent);
 
 		var parentHeight = $parent.outerHeight();
-		var width = this.m_canvasMgr.getRealLineWidth();
+		var width = Math.max(this.m_canvasMgr.getRealLineWidth(), 1);
 		$elm.css("background-color",this.m_lineColor)
 			.css("height",width + "px").css("top", ((parentHeight - width) / 2.0) + "px");
 			
@@ -252,9 +287,10 @@ ChatManager.prototype = {
 		if (this.m_hideCoverTimer){
 			return;
 		}
-		var $control = $("#control");
-		if (!$control.hasClass("slidein")){
-			$control.addClass("slidein");
+
+		if (ChatManagerDevice.IPHONE != this.m_device
+			&& !this.m_control.hasClass("slidein")){
+			this.m_control.addClass("slidein");
 		}
 		this.m_cover.fadeOut(function(){
 			$(this).removeClass("title");
@@ -625,7 +661,8 @@ ChatManager.prototype = {
 		this.m_coverLock = true;
 		this.m_cover.fadeIn(400,function(){
 			var formData = new FormData();
-			formData.append('file', file); // Append extra data before send.
+			formData.append('file', file);
+			formData.append('device', _this.m_device);
 			var xhr = new XMLHttpRequest();
 			xhr.open('POST', "./api/image/upload", true);
 			xhr.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
@@ -839,6 +876,21 @@ ChatManager.prototype = {
 			cloned.smooth(3);
 		}
 		this.sendSocketIOMsgToOthers("DrawingObject", cloned.toJSONString());
+	},
+
+	onSpControlBtnClick:function(e){
+		var _this = this;
+		if (!this.m_control.hasClass("slidein")
+			&& !this.m_control.hasClass("slideout")){
+			this.m_control.addClass("slidein");
+			this.m_spControlBtn.addClass("close");
+		}else if (this.m_control.hasClass("slidein")){
+			this.m_control.removeClass("slidein").addClass("slideout");
+			this.m_spControlBtn.removeClass("close");
+		}else if (this.m_control.hasClass("slideout")){
+			this.m_control.removeClass("slideout").addClass("slidein");
+			this.m_spControlBtn.addClass("close");
+		}
 	},
 	
 	dummy:null

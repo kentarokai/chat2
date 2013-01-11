@@ -9,7 +9,7 @@
 var g_mgr = null;
 
 $(function(){
-
+	
 	if (window.navigator.msPointerEnabled){
 		$("body").addClass("mspointer");
 	}else{
@@ -19,6 +19,10 @@ $(function(){
 		if(!!('onmousedown' in window)){
 			$("body").addClass("mouse");
 		}
+	}
+
+	if(navigator.userAgent.match(/iPhone/i)){
+		$("body").addClass("iphone");
 	}
 
 	g_mgr = new ChatManager();
