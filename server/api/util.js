@@ -5,10 +5,13 @@
  *
 */
 exports.log = function(o){
-	var s = JSON.stringify(o);
-	var now = new Date();
-	
-	console.log("[" + dateToFormattedString(now, "Y/m/d H:i:s") + "] " + s);
+	try{
+		var s = (typeof(o) === 'string') ? o : JSON.stringify(o);
+		var now = new Date();
+		console.log("[" + dateToFormattedString(now, "Y/m/d H:i:s.u") + "] " + s);
+	}catch(e){
+		console.log(o);
+	}
 }
 
 var tkurl_parser = exports.url_parser = function(req, res, callback) {
@@ -45,12 +48,9 @@ exports.buildJSONPResponse = function(req, obj)
 {
 	obj.acceptedAt = new Date();
 	var str = JSON.stringify(obj);
-	if ("callback" in req.query)
-	{
+	if ("callback" in req.query){
 		return req.query.callback + '(' + str + ')';
-	}
-	else
-	{
+	}else{
 		return str;
 	}
 }
