@@ -175,7 +175,6 @@ body > #body {
 
 .title#cover{
 	opacity:1.0;
-	background-color:#eee;
 }
 
 .title#cover .logo{
@@ -208,7 +207,6 @@ body > #body {
 #topArea{
 	margin:10px 5px 0px 5px;
 	padding:5px;
-	border:1px solid #ccc;
 }
 
 #undo,
@@ -563,7 +561,6 @@ button[disabled]#rectBtn:after{
 }
 
 .iphone #topArea{
-	border-width:0px;
 	padding:0px;
 	margin:5px 5px 10px 5px;
 }
@@ -634,8 +631,11 @@ button[disabled]#rectBtn:after{
 
 .iphone #downloadBtn{
 	display:block;
-	position:relative;
+	position:absolute;
 	bottom:auto;
+	right:5px;
+	top:280px;
+	width:100px;
 }
 
 .iphone #toolCover{
@@ -657,4 +657,167 @@ button[disabled]#rectBtn:after{
 	height:60%;
 }
 
+.modern #cover{
+	background-color:#333;
+	background-image:url(../img/loading-white.gif);
+}
+
+.modern .title#cover .logo{
+	color:#fff;
+}
+
+
+.modern #wrap{
+	background-color:#333;
+}
+
+.modern #control{
+	background-color:#333;
+}
+
+.modern button {
+	background-color:transparent;
+	color:#eee;
+	border-width:0px;
+	padding:8px;
+	margin-right:0px;
+	font-size:9px;
+}
+
+.modern button:hover {
+	background-color:rgba(255,255,255,0.3);
+}
+
+.modern #topArea{
+	padding:0px;
+}
+
+.modern #topArea button{
+	padding:0px;
+	width:94px;
+	height:50px;
+}
+
+.modern .ui-widget-content { 
+	background: transparent;
+}
+
+.modern #linePreview{
+	width: 160px;
+	margin: 15px auto;
+	background-color: transparent;
+	border-width:0px;
+	position:relative;
+	top:-32px;
+}
+
+.modern #linePreview .bar{
+	position:relative;
+	width: 100%;
+	left:0;
+}
+
+.modern #users{
+	margin-top:10px;
+	position:relative;
+	top:-20px;
+}
+
+.modern #users li{
+	color:#fff;
+}
+
+.modern #undo:after{
+	background-image:url(../img/icon-undo-disabled.svgz);
+}
+
+.modern button[disabled]#undo:after{
+	background-image:url(../img/icon-undo.svgz);
+}
+
+.modern #textBtn:after{
+	background-image:url(../img/icon-text-disabled.svgz);
+}
+
+.modern button[disabled]#textBtn:after{
+	background-image:url(../img/icon-text.svgz);
+}
+
+.modern #circleBtn:after{
+	background-image:url(../img/icon-circle-disabled.svgz);
+}
+
+.modern button[disabled]#circleBtn:after{
+	background-image:url(../img/icon-circle.svgz);
+}
+
+.modern #rectBtn:after{
+	background-image:url(../img/icon-rect-disabled.svgz);
+}
+
+.modern button[disabled]#rectBtn:after{
+	background-image:url(../img/icon-rect.svgz);
+}
+
+.modern #clearLines{
+	height:50px;
+}
+
+.modern #tool{
+	display:table;
+	margin:0px 5px 0px 5px;
+	padding:0px;
+	position:relative;
+	top:-10px;
+}
+
+.modern #textBtn,
+.modern #circleBtn,
+.modern #rectBtn
+{
+	padding:0px;
+	display:table-cell;
+	width:64px;
+	height:50px;
+}
+
+.modern #uploadArea{
+	margin:10px 5px 0px 5px;
+	padding:0px;
+	position:relative;
+	top:-20px;
+}
+
+.modern #uploadArea button{
+	width:94px;
+	height:40px;
+}
+
+.modern #uploadFile{
+	color:#fff;
+}
+
+.modern #toolCover .toolCoverBG2{
+	background-color:#333;
+}
+
+.modern #toolCover .toolHowTo{
+	font-size:15px;
+	color:#fff;
+	font-weight:bold;
+	line-height:20px;
+}
+
+.modern #downloadBtn{
+	height:40px;
+}
+
+.modern #toolCancelBtn{
+	height:40px;
+	background-color:rgba(255,255,255,0.1);
+}
+
+.modern #toolCancelBtn:hover {
+	background-color:rgba(255,255,255,0.3);
+}
 

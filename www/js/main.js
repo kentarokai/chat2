@@ -24,6 +24,14 @@ $(function(){
 	if(navigator.userAgent.match(/iPhone/i)){
 		$("body").addClass("iphone");
 	}
+	if(navigator.userAgent.match(/iPad/i)){
+		$("body").addClass("ipad");
+	}
+
+	if (!$("body").hasClass("iphone")
+		&& !$("body").hasClass("ipad")){
+		$("body").addClass("modern");
+	}
 
 	g_mgr = new ChatManager();
 	g_mgr.init();
