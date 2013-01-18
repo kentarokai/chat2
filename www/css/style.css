@@ -64,9 +64,6 @@ body > #body {
 	top:0px;
 	left:0px;
 	z-index:1;
-/*	box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.60);
-    -moz-box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.60);
-    -webkit-box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.60);*/
 }
 
 .hidden{
@@ -78,7 +75,6 @@ body > #body {
 	top:0px;
 	left:0px;
 	z-index:2;
-/*	background-image:url(../img/sample.png);*/
 	background-repeat:no-repeat;
 	background-size:contain;
 	background-position:center center;
@@ -420,7 +416,7 @@ button[disabled]#rectBtn:after{
 #toolCover .toolHowTo{
 	position:fixed;
 	width:185px;
-	height:95px;
+	height:100px;
 	right:0px;
 	margin-right:10px;
 	bottom:50px;
@@ -657,6 +653,13 @@ button[disabled]#rectBtn:after{
 	height:60%;
 }
 
+body.modern,
+.modern div,
+.modern button,
+.modern li {
+	font-family: 'Segoe UI',メイリオ,sans-serif;
+}
+
 .modern #cover{
 	background-color:#333;
 	background-image:url(../img/loading-white.gif);
@@ -681,7 +684,7 @@ button[disabled]#rectBtn:after{
 	border-width:0px;
 	padding:8px;
 	margin-right:0px;
-	font-size:9px;
+	font-size:10px;
 }
 
 .modern button:hover {
@@ -703,13 +706,19 @@ button[disabled]#rectBtn:after{
 	z-index:2;
 }
 
+.modern #lineWidthSlider {
+	z-index:2;
+	top:5px;
+}
+
+
 .modern #linePreview{
 	width: 160px;
 	margin: 15px auto;
 	background-color: transparent;
 	border-width:0px;
 	position:relative;
-	top:-32px;
+	top:-27px;
 }
 
 .modern #linePreview .bar{
@@ -765,11 +774,12 @@ button[disabled]#rectBtn:after{
 }
 
 .modern #tool{
-	display:table;
+	display:block;
 	margin:0px 5px 0px 5px;
 	padding:0px;
 	position:relative;
 	top:-10px;
+	background-color:green;
 }
 
 .modern #textBtn,
@@ -777,7 +787,8 @@ button[disabled]#rectBtn:after{
 .modern #rectBtn
 {
 	padding:0px;
-	display:table-cell;
+	display:block;
+	float:left;
 	width:64px;
 	height:50px;
 }
@@ -801,13 +812,28 @@ button[disabled]#rectBtn:after{
 .modern #toolCover .toolCoverBG2{
 	background-color:rgba(48,48,48,0.85);
 	opacity:1.0;
+	background-size:200px auto;
+	background-position:right center;
+	background-repeat:no-repeat;
 }
 
 .modern #toolCover .toolHowTo{
 	font-size:15px;
 	color:#fff;
-	font-weight:bold;
+	font-weight:normal;
 	line-height:20px;
+}
+
+.modern .text#toolCover .toolCoverBG2{
+	background-image:url(../img/icon-text-disabled.svgz);
+}
+
+.modern .circle#toolCover .toolCoverBG2{
+	background-image:url(../img/icon-circle-disabled.svgz);
+}
+
+.modern .rect#toolCover .toolCoverBG2{
+	background-image:url(../img/icon-rect-disabled.svgz);
 }
 
 .modern #downloadBtn{

@@ -1,4 +1,4 @@
 connect
-mysql
 imagemagick
 socket.io
+mongoose
