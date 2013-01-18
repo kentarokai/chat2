@@ -831,7 +831,7 @@ ChatManager.prototype = {
 		this.m_fetchInterval = this.FETCH_DEFAULT_INTERVAL;
 		if ("DrawingObject" == data.type && data.data && this.m_canvasMgr){
 			var obj = new DrawingObject();
-			obj.initWithJSONString(data.data);
+			obj.initWithObject(data.data);
 			this.m_canvasMgr.addOthersObject(obj);
 		}else if ("Message" == data.type){
 			dbg("SocketIO Msg Received: " + JSON.stringify(data));
@@ -884,7 +884,7 @@ ChatManager.prototype = {
 		if (!cloned.smoothed){
 			cloned.smooth(3);
 		}
-		this.sendSocketIOMsgToOthers("DrawingObject", cloned.toJSONString());
+		this.sendSocketIOMsgToOthers("DrawingObject", cloned.toObject());
 	},
 
 	onSpControlBtnClick:function(e){

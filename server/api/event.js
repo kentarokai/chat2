@@ -7,7 +7,6 @@
 var myutil = require('./util');
 var user = require('./user');
 
-var DEFINE_OLD_SEC = 180;
 var Event = null;
 
 exports.registModels = function(mongoose){
