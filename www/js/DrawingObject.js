@@ -92,12 +92,12 @@ DrawingObject.prototype = {
 	initForRect:function(instanceId,  owner, color, lineWidth){
 		this.init(DrawingObjectType.RECT, instanceId, owner, color, lineWidth, "");
 	},
-	
+
 	initWithJSONString:function(str){
-		if (!('JSON' in window)){
-			return;
-		}
-		var obj = JSON.parse(str);
+		this.initWithObject(JSON.parse(str));
+	},
+
+	initWithObject:function(obj){
 		this.id = obj.id;
 		this.instanceId = (this.id.split("-"))[0];
 		this.type = obj.type;
@@ -107,7 +107,7 @@ DrawingObject.prototype = {
 		this.text = obj.text;
 		this.owner = obj.owner;
 		this.randomId = DrawingRandomIds.next();
-		
+
 		if (obj.pointList){
 			var points = [];
 			for(var i=0;i<obj.pointList.length;i+=2){
@@ -171,8 +171,8 @@ DrawingObject.prototype = {
 		}
 		return false;
 	},
-	
-	toJSONString:function(){
+
+	toObject:function(){
 		var obj = {
 			id : this.id,
 			type: this.type,
@@ -191,10 +191,12 @@ DrawingObject.prototype = {
 		}
 		obj.pointList = _points;
 */		
-		if ('JSON' in window){
-			return JSON.stringify(obj);
-		}
-		return "";
+		
+		return obj;
+	},
+	
+	toJSONString:function(){
+		return JSON.stringify(this.toObject());
 	},
 
 	getInstanceId:function(){

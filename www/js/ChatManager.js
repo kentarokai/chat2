@@ -54,7 +54,7 @@ ChatManager.prototype = {
 	m_sendEvents:[],
 	m_sendEventsTimer:null,
 	m_inFetchRequest:false,
-	m_lastFetchedEventId:0,
+	m_lastFetchedTime:0,
 	m_preventFetch:false,
 	m_cover:null,
 	m_hideCoverTimer:null,
@@ -264,8 +264,8 @@ ChatManager.prototype = {
 		}
 		this.m_inFetchRequest = true;
 		var data = {};
-		if (this.m_lastFetchedEventId){
-			data.from = this.m_lastFetchedEventId;
+		if (this.m_lastFetchedTime){
+			data.from = "" + this.m_lastFetchedTime.getTime();
 			data.exceptInstanceId = this.m_instanceId;
 		}
 		$.ajax({
@@ -351,8 +351,8 @@ ChatManager.prototype = {
 			if ("lineclear" == action){
 				clearLineIndex = i;
 			}else if ("imageadd" == action){
-				if (null === bgImagePath){
-					bgImagePath = event.value;
+				if (null === bgImagePath && event.val && event.val.path){
+					bgImagePath = event.val.path;
 				}
 			}else if ("imagedelete" == action){
 				if (null === bgImagePath){
@@ -360,8 +360,7 @@ ChatManager.prototype = {
 				}
 			}else if (0 > clearLineIndex) {
 				var obj = new DrawingObject();
-				obj.initWithJSONString(event.value);
-				//obj.owner = event.userName;
+				obj.initWithObject(event.val);
 	
 				if ("linedelete" == action){
 					deleteIds.push(obj.id);
@@ -383,7 +382,7 @@ ChatManager.prototype = {
 
 		if (0 <= clearLineIndex){
 			this.m_canvasMgr.clear();
-			if (this.m_lastFetchedEventId){
+			if (this.m_lastFetchedTime){
 				this.m_cover.fadeIn();
 				if (this.m_hideCoverTimer){
 					clearTimeout(this.m_hideCoverTimer);
@@ -410,7 +409,9 @@ ChatManager.prototype = {
 			this.clearBGImage();
 		}
 		
-		this.m_lastFetchedEventId = lastEvent.id
+		var d = new Date();
+		d.setTime(parseInt(lastEvent.ctimeStr,10));
+		this.m_lastFetchedTime = d;
 		this.setNextFetch();
 	},
 
@@ -485,9 +486,17 @@ ChatManager.prototype = {
 		for (var i=0;i<this.m_sendEvents.length;i++){
 			var event = this.m_sendEvents[i];
 			var _obj = {
-				action: event.action,
-				value: (event.obj ? event.obj.toJSONString() : (event.value ? event.value : ""))
+				action: event.action
 			};
+
+			if (event.val){
+				_obj.val = event.val;
+			}else if (event.obj){
+				_obj.val = event.obj.toObject();
+			}else{
+				_obj.val = null;
+			}
+			
 			eventList.push(_obj);
 			var eventStr = JSON.stringify(_obj);
 			events += eventStr;
@@ -574,7 +583,7 @@ ChatManager.prototype = {
 		this.m_cover.fadeIn();
 		$("#undo").attr("disabled","1");
 		var _this = this;
-		this.m_sendEvents.push({action:"lineclear", obj: null});
+		this.m_sendEvents.push({action:"lineclear"});
 		this.m_coverLock = true;
 		this.sendEvents(function(data){
 			_this.m_coverLock = false;
@@ -696,7 +705,7 @@ ChatManager.prototype = {
 		var url = data.path;
 		url += "?_=" + Math.floor(Math.random() * 1000000);
 		this.setBGImage(url);
-		this.m_sendEvents.push({action:"imageadd", value: url});
+		this.m_sendEvents.push({action:"imageadd", val:{path: url}});
 		this.sendEvents(null);
 	},
 

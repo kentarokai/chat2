@@ -8,163 +8,179 @@ var myutil = require('./util');
 var user = require('./user');
 
 var DEFINE_OLD_SEC = 180;
+var Event = null;
 
-var deleteOldEvents = function(req, res, howOld, next){
-	var now = new Date();
-	now.setTime(now.getTime() - 1000 * howOld);
-	var dateStr = myutil.buildDateTimeStr(now);
-	req.mysql.query("DELETE FROM event WHERE ctime < ?",
-		[dateStr],
-		function(err, result) {
-			if (err) {
-				res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
-				return;
-			}
-			if (next){
-				next();
-			}
-			return;
-		});
+exports.registModels = function(mongoose){
+	var Schema = mongoose.Schema;
+	var EventSchema = new Schema({
+		ctime: Date,
+		ctimeStr: String,
+		action: String,
+		instanceId: Number,
+		user:{
+			type: Schema.Types.ObjectId,
+			ref: 'User'
+		},
+		val: Object
+	});
+	Event = mongoose.model('Event', EventSchema);
+	return mongoose;
 }
+
 
 var deleteAllEvents = exports.deleteAllEvents = function(req, res, next, passThrough){
 
 	if (passThrough){
-		if (next){
-			next();
-		}
+		next && next();
 		return;
 	}
-	
-	req.mysql.query("DELETE FROM event",
-		function(err, result) {
-			if (err) {
-				res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
-				return;
-			}
-			if (next){
-				next();
-			}
+
+	myutil.log("Delete ALL events");
+
+	Event.remove({}, function (err, result){
+		if (err) {
+			res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
 			return;
-		});
+		}
+		next && next();
+	});
 }
 
 var deleteAllLineEvents = exports.deleteAllLineEvents = function(req, res, next, passThrough){
 
 	if (passThrough){
-		if (next){
-			next();
-		}
+		next && next();
 		return;
 	}
 	myutil.log("Delete all line events");
-	
-	req.mysql.query("DELETE FROM event WHERE action LIKE 'line%'",
-		function(err, result) {
-			if (err) {
-				res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
-				return;
-			}
-			if (next){
-				next();
-			}
+
+	Event.remove({action: /^line/ }, function (err, result){
+		if (err) {
+			res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
 			return;
-		});
+		}
+		next && next();
+	});
 }
 
 var deleteAllImageEvents = exports.deleteAllImageEvents = function(req, res, next, passThrough){
 
 	if (passThrough){
-		if (next){
-			next();
-		}
+		next && next();
 		return;
 	}
 	myutil.log("Delete all image events");
-	
-	req.mysql.query("DELETE FROM event WHERE action LIKE 'image%'",
-		function(err, result) {
+
+	Event.remove({action: /^image/ }, function (err, result){
+		if (err) {
+			res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
+			return;
+		}
+		next && next();
+	});
+}
+
+exports.fetch = function(req, res){
+	var fromTime = new Date();
+	fromTime.setTime(0);
+	if ('from' in req.query){
+		var from = parseInt(req.query.from , 10);
+		if (!isNaN(from)){
+			fromTime.setTime(from);
+		}
+	}
+
+	var exceptInstanceId = 0;
+	if ('exceptInstanceId' in req.query){
+		exceptInstanceId = parseInt(req.query.exceptInstanceId, 10);
+		if (isNaN(exceptInstanceId)){
+			exceptInstanceId = 0;
+		}
+	}
+
+	user.heartbeatToDB(req, res, function(){
+		
+		Event
+		.find()
+		.gt('ctime', fromTime)
+		.ne('instanceId', exceptInstanceId)
+		.populate('user', 'name')
+		.exec(function (err, events) {
 			if (err) {
 				res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
 				return;
 			}
-			if (next){
-				next();
-			}
-			return;
-		});
-}
 
-
-exports.fetch = function(req, res){
-	user.heartbeatToDB(req, res, function(){
-		user.getActiveUsers(req, res, function(users){
-			var from = 0;
-			if ('from' in req.query){
-				from = parseInt(req.query.from , 10);
-				if (isNaN(from)){
-					from = 0;
-				}
-			}
-			var exceptInstanceId = -1;
-			if ('exceptInstanceId' in req.query){
-				exceptInstanceId = parseInt(req.query.exceptInstanceId, 10);
-				if (isNaN(exceptInstanceId)){
-					exceptInstanceId = 0;
-				}
-			}
-			var query = "select event.*, user.name as userName from event INNER JOIN user ON event.userId=user.id";
-			var values = [];
-			query += " WHERE event.id>?";
-			values.push(from);
-			if (0 < exceptInstanceId){
-				query += " AND event.instanceId<>?";
-				values.push(exceptInstanceId);
-			}
-			query += " ORDER BY event.id";
-			req.mysql.query(
-				query,
-				values,
-				function(err, results, fields) {
-					if (err) {
-						res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
-						return;
-					}
-					res.end(myutil.buildJSONPResponse(req, {'stat': 'ok', user: {id: req.userId, name: req.userName}, users: users, events:results}));
-				}
-			);
+			user.getActiveUsers(req, res, function(users){
+				res.end(myutil.buildJSONPResponse(req, {
+					'stat': 'ok',
+					user: {id: req.userId, name: req.userName},
+					users: users,
+					events:events
+				}));
+			});
 		});
-	});
+	});	
 }
 
 var _sendCore  = function(req, res, events, instanceId){
 	var now = new Date();
-	var nowStr = myutil.buildDateTimeStr(now);
 
-	var query = "INSERT INTO event (ctime, action, value, userId, instanceId) VALUES";
-	var values = [];
+	var _events = [];
 	for(var i=0;i<events.length;i++){
 		var event = events[i];
-		if (0!=i){
-			query += ",";
-		}
-		query += "(?, ?, ?, " + req.userId + ", " + instanceId + ")";
-		values.push(nowStr);
-		values.push(event.action);
-		values.push(event.value);
-	}
-	req.mysql.query(query,
-		values,
-		function(err, result) {
-			if (err) {
-				res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
-				return;
+		var _e = {};
+		_e.ctime = now;
+		_e.ctimeStr = "" + now.getTime();
+		_e.action = event.action;
+		_e.instanceId = instanceId;
+		_e.user = req.userId;
+		if(event.val){
+			var val = event.val;
+			if (val.lineWidth && "string" == typeof(val.lineWidth)){
+				val.lineWidth = parseFloat(val.lineWidth);
 			}
-			user.getActiveUsers(req, res, function(users){
-				res.end(myutil.buildJSONPResponse(req, {'stat': 'ok', user: {id: req.userId, name: req.userName}, users: users}));
+			if (val.points && val.points.length){
+				for(var j=0;j<val.points.length;j++){
+					var point = val.points[j];
+					if (point.x && "string" == typeof(point.x)){
+						point.x = parseFloat(point.x);
+					}
+					if (point.y && "string" == typeof(point.y)){
+						point.y = parseFloat(point.y);
+					}
+				}
+			}
+			if (val.smoothed  && "string" == typeof(val.smoothed)){
+				val.smoothed = 'true' == val.smoothed;
+			}
+			_e.val = val;
+		}else{
+			_e.val = null;
+		}
+		
+		_events.push(_e);
+
+		myutil.log(typeof event.val);
+		console.log(event.val);
+	}
+	
+	Event.create(_events, function (err) {
+		if (err){
+			res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Saving Error'}));
 			return;
-			});
+		}
+		user.getActiveUsers(req, res, function(users){
+			res.end(myutil.buildJSONPResponse(req, {
+				'stat': 'ok',
+				user: {
+					id: req.userId,
+					name: req.userName
+				},
+				users: users
+			}));
 		});
+	});
 };
 
 exports.send = function(req, res){

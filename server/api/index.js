@@ -10,7 +10,6 @@ var image = require('./image');
 
 var mapping = {
   '/user/list': user.list,
-  '/user/heartbeat': user.heartbeat,
   '/event/send' : event.send,
   '/event/fetch' : event.fetch,
   '/image/upload' : image.upload,
@@ -24,4 +23,9 @@ exports.map_url = function(app, config) {
   return app;
 }
 
+exports.registModels = function(mongoose){
+	mongoose = user.registModels(mongoose);
+	mongoose = event.registModels(mongoose);
+	return mongoose;
+}
 
