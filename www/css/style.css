@@ -773,11 +773,12 @@ body.modern,
 }
 
 .modern #tool{
-	display:table;
+	display:block;
 	margin:0px 5px 0px 5px;
 	padding:0px;
 	position:relative;
 	top:-10px;
+	background-color:green;
 }
 
 .modern #textBtn,
@@ -785,7 +786,8 @@ body.modern,
 .modern #rectBtn
 {
 	padding:0px;
-	display:table-cell;
+	display:block;
+	float:left;
 	width:64px;
 	height:50px;
 }

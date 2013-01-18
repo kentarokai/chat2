@@ -28,9 +28,17 @@ $(function(){
 		$("body").addClass("ipad");
 	}
 
-	if (!$("body").hasClass("iphone")
-		&& !$("body").hasClass("ipad")){
+	if (!$("body").hasClass("iphone")){
 		$("body").addClass("modern");
+	}
+	
+	if (location.search){
+		var q = "" + location.search;
+		dbg(q);
+		if (q.match(/theme=([a-z]+)/)){
+			var cl = RegExp.$1;
+			$("body").addClass(cl);
+		}
 	}
 
 	g_mgr = new ChatManager();
