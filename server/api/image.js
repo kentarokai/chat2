@@ -24,7 +24,7 @@ var _uploadCore = function(req, res){
 		myutil.log(newPath);
 		fs.rename(req.uploadedImage.path, newPath, function(err){
 			if (err){
-				res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'upload error'}));
+				res.end(myutil.buildJSONPErrorResponse(req, err));
 				return;
 			}
 			var urlPath = req.config.image.uploadURLDir + "/" + newFileName;
@@ -41,13 +41,13 @@ var _uploadPDF = function(req, res){
 	im.convert(['-density','150',req.uploadedImage.path+"[0]",pngPath], function(err,stdout){
 		if (err){
 			myutil.log("convert error: " + JSON.stringify(err));
-			res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'convert error'}));
+			res.end(myutil.buildJSONPErrorResponse(req, err));
 			return;
 		}
 		myutil.log("converted");
 		fs.unlink(req.uploadedImage.path, function(err){
 			if (err){
-				res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'unlink error'}));
+				res.end(myutil.buildJSONPErrorResponse(req, err));
 				return;
 			}
 			myutil.log("removed " + req.uploadedImage.path);
@@ -130,13 +130,13 @@ var _uploadJPG = function(req, res){
 		im.convert(imopt, function(err,stdout){
 			if (err){
 				myutil.log("convert error: " + JSON.stringify(err));
-				res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'convert error'}));
+				res.end(myutil.buildJSONPErrorResponse(req, err));
 				return;
 			}
 			myutil.log("converted");
 			fs.unlink(req.uploadedImage.path, function(err){
 				if (err){
-					res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'unlink error'}));
+					res.end(myutil.buildJSONPErrorResponse(req, err));
 					return;
 				}
 				myutil.log("removed " + req.uploadedImage.path);
@@ -151,7 +151,7 @@ exports.upload = function(req,res){
 
 	res.setHeader('Content-Type', "text/plain; charset=UTF-8");
 	
-	user.heartbeatToDB(req, res, function(){
+	user.heartbeat(req, res, function(){
 
 		myutil.log("upload by " + req.userName);
 		
@@ -197,7 +197,7 @@ exports.upload = function(req,res){
 
 exports.convert = function(req,res){
 
-	user.heartbeatToDB(req, res, function(){
+	user.heartbeat(req, res, function(){
 		myutil.log("download with uploaded base64 data by " + req.userName);
 
 		var data = req.body.data;

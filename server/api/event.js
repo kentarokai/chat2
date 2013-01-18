@@ -38,7 +38,7 @@ var deleteAllEvents = exports.deleteAllEvents = function(req, res, next, passThr
 
 	Event.remove({}, function (err, result){
 		if (err) {
-			res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
+			res.end(myutil.buildJSONPErrorResponse(req, err));
 			return;
 		}
 		next && next();
@@ -55,7 +55,7 @@ var deleteAllLineEvents = exports.deleteAllLineEvents = function(req, res, next,
 
 	Event.remove({action: /^line/ }, function (err, result){
 		if (err) {
-			res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
+			res.end(myutil.buildJSONPErrorResponse(req, err));
 			return;
 		}
 		next && next();
@@ -72,7 +72,7 @@ var deleteAllImageEvents = exports.deleteAllImageEvents = function(req, res, nex
 
 	Event.remove({action: /^image/ }, function (err, result){
 		if (err) {
-			res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
+			res.end(myutil.buildJSONPErrorResponse(req, err));
 			return;
 		}
 		next && next();
@@ -97,7 +97,7 @@ exports.fetch = function(req, res){
 		}
 	}
 
-	user.heartbeatToDB(req, res, function(){
+	user.heartbeat(req, res, function(){
 		
 		Event
 		.find()
@@ -106,7 +106,7 @@ exports.fetch = function(req, res){
 		.populate('user', 'name')
 		.exec(function (err, events) {
 			if (err) {
-				res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
+				res.end(myutil.buildJSONPErrorResponse(req, err));
 				return;
 			}
 
@@ -166,7 +166,7 @@ var _sendCore  = function(req, res, events, instanceId){
 	
 	Event.create(_events, function (err) {
 		if (err){
-			res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Saving Error'}));
+			res.end(myutil.buildJSONPErrorResponse(req, err));
 			return;
 		}
 		user.getActiveUsers(req, res, function(users){
@@ -184,7 +184,7 @@ var _sendCore  = function(req, res, events, instanceId){
 
 exports.send = function(req, res){
 	
-	user.heartbeatToDB(req, res, function(){
+	user.heartbeat(req, res, function(){
 		if (!('events' in req.body)
 			|| !req.body.events.length){
 			res.end(myutil.buildJSONPResponse(req, {'stat': 'ok', user: {id: req.userId, name: req.userName}}));

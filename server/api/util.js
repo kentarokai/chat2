@@ -4,7 +4,7 @@
  * Dual licensed under the MIT or GPL Version 2 licenses.
  *
 */
-exports.log = function(o){
+var customLog = exports.log = function(o){
 	try{
 		var s = (typeof(o) === 'string') ? o : JSON.stringify(o);
 		var now = new Date();
@@ -44,7 +44,7 @@ exports.getUserName = function(req){
 	return null;
 }
 
-exports.buildJSONPResponse = function(req, obj)
+var buildJSONPResponse = exports.buildJSONPResponse = function(req, obj)
 {
 	obj.acceptedAt = new Date();
 	var str = JSON.stringify(obj);
@@ -53,6 +53,17 @@ exports.buildJSONPResponse = function(req, obj)
 	}else{
 		return str;
 	}
+}
+
+exports.buildJSONPErrorResponse = function(req, err){
+
+	var errorMsg = (err.toString ? err.toString() : (err.message ? err.message : "Error"));
+	customLog(errorMsg);
+
+	return buildJSONPResponse(req, {
+		'stat': 'ng',
+		'error': customLog
+		});
 }
 
 var dateToFormattedString = exports.dateToFormattedString = function(date, format){

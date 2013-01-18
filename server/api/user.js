@@ -25,7 +25,7 @@ exports.list = function(req, res) {
 
 	User.find().exec(function(err, users){
 		if (err){
-			res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
+			res.end(myutil.buildJSONPErrorResponse(req, err));
 			return;
 		}
 		res.end(myutil.buildJSONPResponse(req, {'stat': 'ok', 'users':users}));
@@ -38,20 +38,20 @@ var getActiveUsers = exports.getActiveUsers = function(req, res, next){
 
 	User.find().gt('lasttick', now).exec(function(err, users){
 		if (err){
-			res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
+			res.end(myutil.buildJSONPErrorResponse(req, err));
 			return;
 		}
 		next && next(users);
 	});
 }
 
-exports.heartbeatToDB = function(req, res, next){
+exports.heartbeat = function(req, res, next){
 	req.userName = myutil.getUserName(req);
 	var now = new Date();
 
 	User.findOne().select('lasttick').sort({lasttick:'desc'}).exec(function(err, user){
 		if (err){
-			res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
+			res.end(myutil.buildJSONPErrorResponse(req, err));
 			return;
 		}
 
@@ -66,7 +66,7 @@ exports.heartbeatToDB = function(req, res, next){
 		event.deleteAllEvents(req, res, function(){
 			User.findOne({ name: req.userName }, function(err, user){
 				if (err){
-					res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Query Error'}));
+					res.end(myutil.buildJSONPErrorResponse(req, err));
 					return;
 				}
 				if (!user){
@@ -76,7 +76,7 @@ exports.heartbeatToDB = function(req, res, next){
 				user.lasttick = now;
 				user.save(function(err){
 					if (err){
-						res.end(myutil.buildJSONPResponse(req, {'stat': 'ng', 'error':'Heartbeat Save Error'}));
+						res.end(myutil.buildJSONPErrorResponse(req, err));
 						return;
 					}
 					req.userId = user._id;
