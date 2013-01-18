@@ -700,6 +700,7 @@ button[disabled]#rectBtn:after{
 
 .modern .ui-widget-content { 
 	background: transparent;
+	z-index:2;
 }
 
 .modern #linePreview{
