@@ -703,6 +703,7 @@ body.modern,
 
 .modern .ui-widget-content { 
 	background: transparent;
+	z-index:2;
 }
 
 .modern #lineWidthSlider {
