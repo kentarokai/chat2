@@ -2,3 +2,4 @@ connect
 imagemagick
 socket.io
 mongoose
+cookie

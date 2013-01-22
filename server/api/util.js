@@ -5,13 +5,7 @@
  *
 */
 var customLog = exports.log = function(o){
-	try{
-		var s = (typeof(o) === 'string') ? o : JSON.stringify(o);
-		var now = new Date();
-		console.log("[" + dateToFormattedString(now, "Y/m/d H:i:s.u") + "] " + s);
-	}catch(e){
-		console.log(o);
-	}
+	console.log("[" + dateToFormattedString(new Date(), "Y/m/d H:i:s.u") + "] " , o);
 }
 
 var tkurl_parser = exports.url_parser = function(req, res, callback) {

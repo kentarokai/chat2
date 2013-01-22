@@ -53,6 +53,7 @@ ChatManager.prototype = {
 	m_instanceId:"",
 	m_sendEvents:[],
 	m_sendEventsTimer:null,
+	m_firstFetch:true,
 	m_inFetchRequest:false,
 	m_lastFetchedTime:0,
 	m_preventFetch:false,
@@ -186,8 +187,11 @@ ChatManager.prototype = {
 			    
 			}).bind("dragenter dragover", false);
 		}
+	},
 
-		// Socket.IO
+	setupSocketIO:function(){
+		var _this = this;
+		
 		if (Modernizr.websockets
 			&& ChatManagerConfig.SOCKETIO_ENABLED
 			&& 'io' in window){
@@ -196,7 +200,7 @@ ChatManager.prototype = {
 			});
 
 			this.m_socket = io.connect(
-		    	ChatManagerConfig.SOCKETIO_DOMAIN ,
+			    ChatManagerConfig.SOCKETIO_DOMAIN ,
 				{
 					port:ChatManagerConfig.SOCKETIO_PORT
 				}
@@ -309,9 +313,14 @@ ChatManager.prototype = {
 		}
 		var _this = this;
 		this.hideCover();
-		
+
 		this.m_inFetchRequest = false;
 
+		if (this.m_firstFetch){
+			this.m_firstFetch = false;
+			this.setupSocketIO();
+		}
+		
 		if (data.user){
 			this.m_myName = data.user.name;
 			this.m_canvasMgr.setName(this.m_myName);
@@ -843,12 +852,11 @@ ChatManager.prototype = {
 			return;
 		}
 		var obj = {
-			from: this.m_myName,
 			instanceId: this.m_instanceId,
 			type: type,
 			data: data
 		};
-		this.m_socket.emit('others', obj);
+		this.m_socket.json.emit('others', obj);
 	},
 
 	m_drawingObjEventTimers:null,

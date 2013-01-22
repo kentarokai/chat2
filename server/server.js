@@ -5,10 +5,15 @@
  *
 */
 var connect = require('connect');
+var MemoryStore = connect.session.MemoryStore;
 var http = require('http');
 var path = require('path');
 var api = require('./api');
 var middleware_mongoose = require('./middleware/mongoose');
+var sessionStore = new MemoryStore();
+var Cookie = require('cookie');
+
+var parseSignedCookies = require('connect').utils.parseSignedCookies;
 
 exports.app = function(config)
 {
@@ -27,7 +32,16 @@ exports.app = function(config)
 			})
 		.use(middleware_mongoose.middleware())
 		.use(connect.query())
-		.use(connect.bodyParser());
+		.use(connect.bodyParser())
+		.use(connect.cookieParser())
+		.use(connect.session({
+			secret: 'chat2serv',
+			key: 'chat.sid',
+			cookie: {
+				httpOnly: false
+			},
+			store: sessionStore
+		}));
 
     app = api.map_url(app, config);
 	
@@ -55,4 +69,60 @@ if (!module.parent)
 	var server = http.createServer(app);
 	server.listen(config.server.port);
 }
+
+// socket.io
+var io = require('socket.io').listen(3000)
+
+io.configure(function () {
+	io.set('transports', ['websocket']);
+	io.set('authorization', function (handshakeData, callback) {
+		if (handshakeData.headers.cookie){
+			console.log(Cookie);
+			var cookies = Cookie.parse(handshakeData.headers.cookie);
+			var sessionId = parseSignedCookies(cookies, 'chat2serv')['chat.sid'];
+			console.log(sessionId);
+			console.log(sessionStore.sessions);
+			sessionStore.get(sessionId, function (err, session) {
+				if (err || !session){
+
+				}else{
+					handshakeData.session =  session;
+					console.log(session);
+				}
+				callback(null, true);
+			});			
+		}else{
+			callback(null, true);
+		}
+	});
+});
+
+
+io.sockets.on('connection', function (socket) {
+
+	console.log('session data##', socket.handshake.session);
+	
+	socket.on('all', function(data){
+		io.sockets.json.emit('msg', data);
+	});
+
+	socket.on('others', function(data){
+		if (socket.handshake.session && socket.handshake.session.userName){
+			data.from = socket.handshake.session.userName;
+			socket.json.broadcast.emit('msg', data);
+		}
+	});
+
+	var initialMsg = 'Hello, ';
+	if (socket.handshake.session && socket.handshake.session.userName){
+		initialMsg += socket.handshake.session.userName;
+	}
+	
+	socket.json.emit('msg', {
+		from: 'ChatServer',
+		instanceId: 0,
+		data: initialMsg,
+		type: 'Message'
+	});
+});
 
