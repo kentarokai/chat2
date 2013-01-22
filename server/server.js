@@ -32,6 +32,9 @@ exports.app = function(config)
 			})
 		.use(middleware_mongoose.middleware())
 		.use(connect.query())
+		.use(connect.basicAuth(function(uname, pass){
+			return true;
+		}))
 		.use(connect.bodyParser())
 		.use(connect.cookieParser())
 		.use(connect.session({
