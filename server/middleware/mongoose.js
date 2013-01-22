@@ -1,7 +1,7 @@
 var mongoose = require('mongoose');
 
 exports.init = function(config){
-	mongoose.connect('localhost', 'chatserver');
+	mongoose.connect(config.mongoose.host, config.mongoose.database);
 	return mongoose;
 }
 

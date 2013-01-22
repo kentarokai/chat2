@@ -47,7 +47,7 @@ var getActiveUsers = exports.getActiveUsers = function(req, res, next){
 
 exports.heartbeat = function(req, res, next){
 	req.userName = myutil.getUserName(req);
-	req.session.userName = req.userName
+	req.session.userName = req.userName;
 	var now = new Date();
 
 	User.findOne().select('lasttick').sort({lasttick:'desc'}).exec(function(err, user){

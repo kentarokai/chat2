@@ -9,6 +9,8 @@
 var g_mgr = null;
 
 $(function(){
+
+	var default_theme = "modern";
 	
 	if (window.navigator.msPointerEnabled){
 		$("body").addClass("mspointer");
@@ -29,7 +31,7 @@ $(function(){
 	}
 
 	if (!$("body").hasClass("iphone")){
-		$("body").addClass("modern");
+		$("body").addClass(default_theme);
 	}
 	
 	if (location.search){
@@ -37,6 +39,9 @@ $(function(){
 		dbg(q);
 		if (q.match(/theme=([a-z]+)/)){
 			var cl = RegExp.$1;
+			if ($("body").hasClass(default_theme)){
+				$("body").removeClass(default_theme);
+			}
 			$("body").addClass(cl);
 		}
 	}

@@ -12,12 +12,12 @@ var api = require('./api');
 var middleware_mongoose = require('./middleware/mongoose');
 var sessionStore = new MemoryStore();
 var Cookie = require('cookie');
-
+var config = require('./config');
 var parseSignedCookies = require('connect').utils.parseSignedCookies;
 
 exports.app = function(config)
 {
-	var mongoose = middleware_mongoose.init();
+	var mongoose = middleware_mongoose.init(config);
 	mongoose = api.registModels(mongoose);
 
 	var app = connect()
@@ -35,8 +35,8 @@ exports.app = function(config)
 		.use(connect.bodyParser())
 		.use(connect.cookieParser())
 		.use(connect.session({
-			secret: 'chat2serv',
-			key: 'chat.sid',
+			secret: config.session.secret,
+			key: config.session.key,
 			cookie: {
 				httpOnly: false
 			},
@@ -51,6 +51,64 @@ exports.app = function(config)
 	});
 
 	return app;
+}
+
+var setupSocketIO = function( config){
+
+	var io = require('socket.io').listen(config.socketio.port)
+	
+	io.configure(function () {
+		io.set('transports', ['websocket']);
+		io.set('authorization', function (handshakeData, callback) {
+			if (handshakeData.headers.cookie){
+				console.log(Cookie);
+				var cookies = Cookie.parse(handshakeData.headers.cookie);
+				var sessionId = parseSignedCookies(cookies, config.session.secret)[config.session.key];
+				console.log(sessionId);
+				console.log(sessionStore.sessions);
+				sessionStore.get(sessionId, function (err, session) {
+					if (err || !session){
+	
+					}else{
+						handshakeData.session =  session;
+						console.log(session);
+					}
+					callback(null, true);
+				});			
+			}else{
+				callback(null, true);
+			}
+		});
+	});
+	
+	io.sockets.on('connection', function (socket) {
+	
+		console.log('session data##', socket.handshake.session);
+		
+		socket.on('all', function(data){
+			io.sockets.json.emit('msg', data);
+		});
+	
+		socket.on('others', function(data){
+			if (socket.handshake.session && socket.handshake.session.userName){
+				data.from = socket.handshake.session.userName;
+				socket.json.broadcast.emit('msg', data);
+			}
+		});
+	
+		var initialMsg = 'Hello, ';
+		if (socket.handshake.session && socket.handshake.session.userName){
+			initialMsg += socket.handshake.session.userName;
+		}
+		
+		socket.json.emit('msg', {
+			from: 'ChatServer',
+			instanceId: 0,
+			data: initialMsg,
+			type: 'Message'
+		});
+	});
+
 }
 
 if (!module.parent)
@@ -68,61 +126,8 @@ if (!module.parent)
 	var app = exports.app(config);
 	var server = http.createServer(app);
 	server.listen(config.server.port);
+	
+	setupSocketIO(config)
 }
 
-// socket.io
-var io = require('socket.io').listen(3000)
-
-io.configure(function () {
-	io.set('transports', ['websocket']);
-	io.set('authorization', function (handshakeData, callback) {
-		if (handshakeData.headers.cookie){
-			console.log(Cookie);
-			var cookies = Cookie.parse(handshakeData.headers.cookie);
-			var sessionId = parseSignedCookies(cookies, 'chat2serv')['chat.sid'];
-			console.log(sessionId);
-			console.log(sessionStore.sessions);
-			sessionStore.get(sessionId, function (err, session) {
-				if (err || !session){
-
-				}else{
-					handshakeData.session =  session;
-					console.log(session);
-				}
-				callback(null, true);
-			});			
-		}else{
-			callback(null, true);
-		}
-	});
-});
-
-
-io.sockets.on('connection', function (socket) {
-
-	console.log('session data##', socket.handshake.session);
-	
-	socket.on('all', function(data){
-		io.sockets.json.emit('msg', data);
-	});
-
-	socket.on('others', function(data){
-		if (socket.handshake.session && socket.handshake.session.userName){
-			data.from = socket.handshake.session.userName;
-			socket.json.broadcast.emit('msg', data);
-		}
-	});
-
-	var initialMsg = 'Hello, ';
-	if (socket.handshake.session && socket.handshake.session.userName){
-		initialMsg += socket.handshake.session.userName;
-	}
-	
-	socket.json.emit('msg', {
-		from: 'ChatServer',
-		instanceId: 0,
-		data: initialMsg,
-		type: 'Message'
-	});
-});
 
