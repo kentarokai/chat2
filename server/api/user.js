@@ -17,7 +17,7 @@ exports.registModels = function(mongoose){
 		lasttick: Date,
 		name: String
 	});
-	User = mongoose.model('User', UserSchema);
+	User = mongoose.model('ChatUser', UserSchema);
 	return mongoose;
 }
 

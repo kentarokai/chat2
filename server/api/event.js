@@ -18,11 +18,11 @@ exports.registModels = function(mongoose){
 		instanceId: Number,
 		user:{
 			type: Schema.Types.ObjectId,
-			ref: 'User'
+			ref: 'ChatUser'
 		},
 		val: Object
 	});
-	Event = mongoose.model('Event', EventSchema);
+	Event = mongoose.model('ChatEvent', EventSchema);
 	return mongoose;
 }
 
