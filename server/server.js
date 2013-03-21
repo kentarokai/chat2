@@ -33,6 +33,7 @@ exports.app = function(config)
 		.use(middleware_mongoose.middleware())
 		.use(connect.query())
 		.use(connect.basicAuth(function(uname, pass){
+			console.log("AUTH:" + uname + ":" + pass);
 			return true;
 		}))
 		.use(connect.bodyParser())
